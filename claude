@@ -1,765 +1,299 @@
-dokumen asli https://docs.google.com/document/d/1lOBW8UZeBtItPCNB7amAj6xVTc0GzIl-/edit?usp=sharing&ouid=115256850315855326924&rtpof=true&sd=true
-
-⬡ CELESTIAL CORE ENGINE
-BAZI LIFE ENGINE — TECHNICAL CONCEPT DOCUMENT
-Disusun oleh: Claude (Anthropic) · Versi 2.0 · Untuk Tim Developer Android
-
-
-
-Dokumen ini menggabungkan & melampaui konsep GPT, DeepSeek, dan Gemini.
+# CELESTIAL CORE ENGINE
+BAZI LIFE ENGINE — TECHNICAL CONCEPT DOCUMENT  
+Disusun oleh: Claude (Anthropic) · Versi 2.0 · Untuk Tim Developer Android  
+Dokumen ini menggabungkan & melampaui konsep GPT, DeepSeek, dan Gemini.  
 Seluruh angka bersumber dari algoritma, bukan dekorasi.
 
-
-1. VISI & FILOSOFI PRODUK
+## 1. VISI & FILOSOFI PRODUK
 BAZI LIFE ENGINE adalah sistem simulasi kehidupan deterministik yang mengonversi metafisika Tiongkok klasik menjadi parameter RPG yang dapat diverifikasi secara matematis. Tidak ada satu pun angka yang bersifat dekoratif atau acak.
-Tiga Pilar Filosofi
-PILAR
-PRINSIP
-IMPLEMENTASI
-🎯 Akurasi Klasik
-Semua rumus dari teks primer: Sanming Tonghui, Tian He Fu, ZWDS klasik
-Engine terpisah per sistem, dapat diaudit per pilar, cross-validated
-🎮 RPG Imersif
-User adalah Main Character, bukan penonton. Setiap angka punya konteks game
-Status bar, musuh, quest, weapon — semuanya real-time dari kalkulasi
-🔍 Transparansi Total
-Setiap angka bisa di-tap → modal berisi rumus, sumber, dan nilai mentah
-Audit Mode untuk pakar metafisika, Export CSV untuk validasi eksternal
 
+### Tiga Pilar Filosofi
+| PILAR | PRINSIP | IMPLEMENTASI |
+|-------|---------|--------------|
+| 🎯 Akurasi Klasik | Semua rumus dari teks primer: Sanming Tonghui, Tian He Fu, ZWDS klasik | Engine terpisah per sistem, dapat diaudit per pilar, cross-validated |
+| 🎮 RPG Imersif | User adalah Main Character, bukan penonton. Setiap angka punya konteks game | Status bar, musuh, quest, weapon — semuanya real-time dari kalkulasi |
+| 🔍 Transparansi Total | Setiap angka bisa di-tap → modal berisi rumus, sumber, dan nilai mentah | Audit Mode untuk pakar metafisika, Export CSV untuk validasi eksternal |
 
-Perbedaan Utama dari Konsep Sebelumnya
+### Perbedaan Utama dari Konsep Sebelumnya
 Claude menambahkan 4 dimensi yang BELUM ada di GPT/DeepSeek/Gemini:
-DIMENSI BARU
-APA YANG DITAMBAHKAN
-DAMPAK KE UX
-Resonance Score
-Skor keselarasan antar semua sistem (Bazi + ZWDS + QM)
-Satu angka 'hari ini seberapa aligned kamu dengan kosmos'
-Progression Memory
-Room DB menyimpan fluktuasi LUCK per jam selama 90 hari
-Grafik historis → user bisa validasi prediksi vs kenyataan
-Social Pillar System
-Analisis kompatibilitas dengan chart orang lain (pasangan, rekan)
-Party system RPG berdasarkan clash/harmony antar chart
-Adaptive Difficulty
-Enemy power scale berdasarkan Da Yun phase, bukan flat
-Boss lebih kuat saat transisi Da Yun, lemah di fase stabil
 
-2. ARSITEKTUR SISTEM LENGKAP
+| DIMENSI BARU | APA YANG DITAMBAHKAN | DAMPAK KE UX |
+|--------------|-----------------------|-------------|
+| Resonance Score | Skor keselarasan antar semua sistem (Bazi + ZWDS + QM) | Satu angka 'hari ini seberapa aligned kamu dengan kosmos' |
+| Progression Memory | Room DB menyimpan fluktuasi LUCK per jam selama 90 hari | Grafik historis → user bisa validasi prediksi vs kenyataan |
+| Social Pillar System | Analisis kompatibilitas dengan chart orang lain (pasangan, rekan) | Party system RPG berdasarkan clash/harmony antar chart |
+| Adaptive Difficulty | Enemy power scale berdasarkan Da Yun phase, bukan flat | Boss lebih kuat saat transisi Da Yun, lemah di fase stabil |
+
+## 2. ARSITEKTUR SISTEM LENGKAP
 Arsitektur 6-Layer — lebih granular dari konsep sebelumnya (mereka hanya 4 layer):
-LAYER
-NAMA
-FUNGSI
-OUTPUT
-L0
-Raw Input
-Birth data + real-time clock + geolocation
-Struct: UserBirthData, Timestamp
-L1
-Calendar Engine
-Konversi Gregorian → Lunar, Solar Term, Jia Zi
-PillarSet: 4 pilar lengkap
-L2
-Metaphysics Engine
-Bazi + ZWDS + QMDJ + Feng Shui + I Ching
-RawMetaphysicsResult (5 sub-struct)
-L3
-Normalization
-Raw enum/float → 0.0–1.0 per dimensi
-NormalizedProfile (30+ fields)
-L4
-Game Logic
-Stat Mapper, Enemy Spawner, Quest Generator
-GameState (stat, enemy[], quest[])
-L5
-UI / Presentation
-Jetpack Compose, StateFlow, Canvas
-Rendered RPG Interface
 
+| LAYER | NAMA | FUNGSI | OUTPUT |
+|-------|------|--------|--------|
+| L0 | Raw Input | Birth data + real-time clock + geolocation | Struct: UserBirthData, Timestamp |
+| L1 | Calendar Engine | Konversi Gregorian → Lunar, Solar Term, Jia Zi | PillarSet: 4 pilar lengkap |
+| L2 | Metaphysics Engine | Bazi + ZWDS + QMDJ + Feng Shui + I Ching | RawMetaphysicsResult (5 sub-struct) |
+| L3 | Normalization | Raw enum/float → 0.0–1.0 per dimensi | NormalizedProfile (30+ fields) |
+| L4 | Game Logic | Stat Mapper, Enemy Spawner, Quest Generator | GameState (stat, enemy[], quest[]) |
+| L5 | UI / Presentation | Jetpack Compose, StateFlow, Canvas | Rendered RPG Interface |
 
-Layer 1 Detail: Calendar Engine (Yang Sering Dilewatkan)
+### Layer 1 Detail: Calendar Engine (Yang Sering Dilewatkan)
 Ini adalah layer yang paling sering underspec oleh AI lain. Tanpa ini, semua engine di atas tidak akurat.
-KOMPONEN KALENDER
-METODE PERHITUNGAN
-CATATAN KRITIS
-Solar Term (节气)
-Ephemeris solar longitude, akurat hingga menit
-WAJIB untuk menentukan bulan Bazi yang benar
-Solar Time Correction
-LMT = UTC + (longitude × 4 menit)
-Selisih hingga 30+ menit di kota berbeda
-Jia Zi 60 Cycle
-Lookup table 60 kombinasi, modular arithmetic
-Dasar semua pilar, harus 100% presisi
-Da Yun Start Age
-3 tahun per bulan sisa (Yang/Yin, Maju/Mundur)
-Error di sini = semua level/EXP salah
-Hour Branch Boundary
-23:00 = Zi awal hari BARU, bukan hari lama
-Bug paling umum di implementasi naif
-I Ching Hexagram
-64 hex dari biner waktu (tahun+bulan+hari+jam)
-Deterministic, bukan random spin
 
-3. METAPHYSICS ENGINE — SPESIFIKASI LENGKAP
-3.1  Bazi Engine (四柱命理)
+| KOMPONEN KALENDER | METODE PERHITUNGAN | CATATAN KRITIS |
+|-------------------|--------------------|----------------|
+| Solar Term (节气) | Ephemeris solar longitude, akurat hingga menit | WAJIB untuk menentukan bulan Bazi yang benar |
+| Solar Time Correction | LMT = UTC + (longitude × 4 menit) | Selisih hingga 30+ menit di kota berbeda |
+| Jia Zi 60 Cycle | Lookup table 60 kombinasi, modular arithmetic | Dasar semua pilar, harus 100% presisi |
+| Da Yun Start Age | 3 tahun per bulan sisa (Yang/Yin, Maju/Mundur) | Error di sini = semua level/EXP salah |
+| Hour Branch Boundary | 23:00 = Zi awal hari BARU, bukan hari lama | Bug paling umum di implementasi naif |
+| I Ching Hexagram | 64 hex dari biner waktu (tahun+bulan+hari+jam) | Deterministic, bukan random spin |
+
+## 3. METAPHYSICS ENGINE — SPESIFIKASI LENGKAP
+
+### 3.1 Bazi Engine (四柱命理)
 Output Numerik yang Dihasilkan:
-VARIABEL
-RANGE
-SATUAN
-DESKRIPSI
-dayMasterStrength
-0.0–1.0
-float
-Kekuatan hari master (strong/weak)
-elementWeights[5]
-0.0–1.0
-float[]
-Bobot 5 elemen (Wood,Fire,Earth,Metal,Water)
-tenGodWeights[10]
-0.0–1.0
-float[]
-Bobot 10 Dewa di semua pilar
-clashScore
-0–100
-Int
-Total skor clash antar pilar+waktu kini
-harmonyScore
-0–100
-Int
-Total skor harmony (combination)
-voidPillar
-boolean
-bool
-Apakah pilar hari masuk Kong Wang (空亡)
-dayRunIndex
-1–12
-Int
-Nomor Da Yun aktif saat ini
-dayRunFavorable
-0.0–1.0
-float
-Seberapa menguntungkan Da Yun ini untuk DM
-naYinElement
-Enum
-Element
-Elemen Na Yin dari pilar hari
 
+| VARIABEL | RANGE | SATUAN | DESKRIPSI |
+|----------|-------|--------|-----------|
+| dayMasterStrength | 0.0–1.0 | float | Kekuatan hari master (strong/weak) |
+| elementWeights[5] | 0.0–1.0 | float[] | Bobot 5 elemen (Wood,Fire,Earth,Metal,Water) |
+| tenGodWeights[10] | 0.0–1.0 | float[] | Bobot 10 Dewa di semua pilar |
+| clashScore | 0–100 | Int | Total skor clash antar pilar+waktu kini |
+| harmonyScore | 0–100 | Int | Total skor harmony (combination) |
+| voidPillar | boolean | bool | Apakah pilar hari masuk Kong Wang (空亡) |
+| dayRunIndex | 1–12 | Int | Nomor Da Yun aktif saat ini |
+| dayRunFavorable | 0.0–1.0 | float | Seberapa menguntungkan Da Yun ini untuk DM |
+| naYinElement | Enum | Element | Elemen Na Yin dari pilar hari |
 
-Formula Kekuatan Elemen (Rumus Claude — lebih granular dari semua konsep sebelumnya):
-elementScore(e) = Σ(pilar × bobot_posisi) × seasonMultiplier × combineBonus − clashPenalty
-  Bobot posisi: HeavenStem=1.0 | EarthBranch=2.0 | HiddenStem=0.5 | MonthPillar×1.3 | DayPillar×1.2
-  SeasonMultiplier: Elemen aktif musim kelahiran ×2.0, elemen yang dilemahkan musim ×0.6
-3.2  Zi Wei Dou Shu Engine (紫微斗数)
-OUTPUT VARIABEL
-RANGE
-MAPPING
-DIGUNAKAN UNTUK
-palaceWeight[12]
-0.0–1.0
-float[]
-Berat pengaruh tiap rumah kehidupan
-majorStarScore
-0–100
-Int
-Kekuatan bintang utama di rumah destinasi
-auxiliaryStarBonus
-0–50
-Int
-Bonus bintang pembantu (San Tai, Ba Zuo, dll)
-inauspiciousPenalty
-0–50
-Int
-Penalti bintang buruk (Qing Yang, Tuo Luo)
-healthPalaceScore
-0–100
-Int
-Khusus: skor rumah kesehatan → HP modifier
-wealthPalaceScore
-0–100
-Int
-Skor rumah harta → STR/Weapon modifier
-spiritPalaceScore
-0–100
-Int
-Skor rumah spiritual → MP modifier
+Formula Kekuatan Elemen (Rumus Claude — lebih granular dari semua konsep sebelumnya):  
+elementScore(e) = Σ(pilar × bobot_posisi) × seasonMultiplier × combineBonus − clashPenalty  
+Bobot posisi: HeavenStem=1.0 | EarthBranch=2.0 | HiddenStem=0.5 | MonthPillar×1.3 | DayPillar×1.2  
+SeasonMultiplier: Elemen aktif musim kelahiran ×2.0, elemen yang dilemahkan musim ×0.6
 
+### 3.2 Zi Wei Dou Shu Engine (紫微斗数)
 
-3.3  Qi Men Dun Jia Engine (奇门遁甲)
+| OUTPUT VARIABEL | RANGE | MAPPING | DIGUNAKAN UNTUK |
+|-----------------|-------|---------|-----------------|
+| palaceWeight[12] | 0.0–1.0 | float[] | Berat pengaruh tiap rumah kehidupan |
+| majorStarScore | 0–100 | Int | Kekuatan bintang utama di rumah destinasi |
+| auxiliaryStarBonus | 0–50 | Int | Bonus bintang pembantu (San Tai, Ba Zuo, dll) |
+| inauspiciousPenalty | 0–50 | Int | Penalti bintang buruk (Qing Yang, Tuo Luo) |
+| healthPalaceScore | 0–100 | Int | Khusus: skor rumah kesehatan → HP modifier |
+| wealthPalaceScore | 0–100 | Int | Skor rumah harta → STR/Weapon modifier |
+| spiritPalaceScore | 0–100 | Int | Skor rumah spiritual → MP modifier |
+
+### 3.3 Qi Men Dun Jia Engine (奇门遁甲)
 Ini adalah engine PALING DINAMIS — berubah setiap 2 jam. Harus dioptimasi untuk background thread.
-KOMPONEN
-OUTPUT
-CARA PENGHITUNGAN
-Ju (局) Identifier
-Yang 1–9 / Yin 1–9
-Dari solar term + hari. Menentukan peta dasar
-8 Pintu (門)
-Score per pintu
-Kai=100, Xiu=85, Sheng=80, Jing=60, Si=30, Du=15, Jing=45, Shang=25
-9 Bintang (星)
-Score per bintang
-Tian Xin=100, Tian Peng=85 … Tian Rui=20
-8 Dewa (神)
-Buff/debuff multiplier
-Liu He ×1.3, Jiu Di ×0.7, dll
-Arah Aktif
-DirectionLuck[8]
-Overlay pintu+bintang+dewa per arah mata angin
-Hour Risk Index
-0–100
-Skor gabungan jam buruk (Du Men, Tian Rui aktif)
 
+| KOMPONEN | OUTPUT | CARA PENGHITUNGAN |
+|----------|--------|-------------------|
+| Ju (局) Identifier | Yang 1–9 / Yin 1–9 | Dari solar term + hari. Menentukan peta dasar |
+| 8 Pintu (門) | Score per pintu | Kai=100, Xiu=85, Sheng=80, Jing=60, Si=30, Du=15, Jing=45, Shang=25 |
+| 9 Bintang (星) | Score per bintang | Tian Xin=100, Tian Peng=85 … Tian Rui=20 |
+| 8 Dewa (神) | Buff/debuff multiplier | Liu He ×1.3, Jiu Di ×0.7, dll |
+| Arah Aktif | DirectionLuck[8] | Overlay pintu+bintang+dewa per arah mata angin |
+| Hour Risk Index | 0–100 | Skor gabungan jam buruk (Du Men, Tian Rui aktif) |
 
-3.4  Feng Shui Harian & 3.5  I Ching
-ENGINE
-INPUT
-OUTPUT KUNCI
-DIPAKAI DI GAME
-Feng Shui
-Tahun shio + bulan + hari
-ShaDirection[], AuspiciousScore, WuHuang Position
-Enemy Direction Boss, Quest 'Hindari Arah X'
-I Ching
-60-cycle index dari tanggal+jam
-HexagramID (1–64), Stability Category
-VolatilityIndex → Enemy spawn multiplier
+### 3.4 Feng Shui Harian & 3.5 I Ching
 
-4. PLAYER STATS SYSTEM — FORMULA LENGKAP
+| ENGINE | INPUT | OUTPUT KUNCI | DIPAKAI DI GAME |
+|--------|-------|--------------|-----------------|
+| Feng Shui | Tahun shio + bulan + hari | ShaDirection[], AuspiciousScore, WuHuang Position | Enemy Direction Boss, Quest 'Hindari Arah X' |
+| I Ching | 60-cycle index dari tanggal+jam | HexagramID (1–64), Stability Category | VolatilityIndex → Enemy spawn multiplier |
+
+## 4. PLAYER STATS SYSTEM — FORMULA LENGKAP
 Semua formula di bawah ini menggabungkan input dari SEMUA engine. Tidak ada stat yang hanya dari satu sumber.
-STAT
-MAX
-FORMULA LENGKAP
-SUMBER DATA
-HP
-1000
-HP = clamp((resourceScore×0.5 + selfScore×0.3 + healthPalaceScore×0.2) × 10, 0, 1000)
-Bazi: Resource Element + Self Element, ZWDS: Health Palace
-MP
-1000
-MP = clamp((outputScore×0.5 + spiritPalaceScore×0.3 + qmdjDoorScore×0.2) × 10, 0, 1000)
-Bazi: Output Element, ZWDS: Spirit Palace, QMDJ: Door Score
-STR
-100
-STR = (officerScore×0.6 + wealthPalaceScore×0.3 + powerStarCount×0.1) × 100
-Bazi: Officer/7Killings, ZWDS: Wealth+Power Stars
-DEF
-100
-DEF = (resourceScore×0.5 + wealthScore×0.3 + earthWeight×0.2) × 100
-Bazi: Resource+Wealth Element, 5 Elemen: Tanah
-AGI
-100
-AGI = (woodWeight×0.4 + speedStarBonus×0.4 − clashPenalty×0.2) × 100
-Bazi: Wood Element, ZWDS: Speed Stars, Clash Penalty
-LUCK
-100
-LUCK = ((goodStarScore − badStarScore + 100)×0.4 + hourLuckIndex×0.35 + dayRunFavorable×25) × 0.01
-ZWDS: Star Balance, QMDJ: Hour Luck, Bazi: Da Yun
-LVL
-99
-LEVEL = dayRunIndex + 1   (mulai dari 1 sampai ≈ 12)
-Bazi: Da Yun Index
-EXP
-100%
-EXP% = ((currentAge − daYunStartAge) / 10.0) × 100
-Bazi: Usia dalam Da Yun
 
+| STAT | MAX | FORMULA LENGKAP | SUMBER DATA |
+|------|-----|-----------------|-------------|
+| HP | 1000 | HP = clamp((resourceScore×0.5 + selfScore×0.3 + healthPalaceScore×0.2) × 10, 0, 1000) | Bazi: Resource Element + Self Element, ZWDS: Health Palace |
+| MP | 1000 | MP = clamp((outputScore×0.5 + spiritPalaceScore×0.3 + qmdjDoorScore×0.2) × 10, 0, 1000) | Bazi: Output Element, ZWDS: Spirit Palace, QMDJ: Door Score |
+| STR | 100 | STR = (officerScore×0.6 + wealthPalaceScore×0.3 + powerStarCount×0.1) × 100 | Bazi: Officer/7Killings, ZWDS: Wealth+Power Stars |
+| DEF | 100 | DEF = (resourceScore×0.5 + wealthScore×0.3 + earthWeight×0.2) × 100 | Bazi: Resource+Wealth Element, 5 Elemen: Tanah |
+| AGI | 100 | AGI = (woodWeight×0.4 + speedStarBonus×0.4 − clashPenalty×0.2) × 100 | Bazi: Wood Element, ZWDS: Speed Stars, Clash Penalty |
+| LUCK | 100 | LUCK = ((goodStarScore − badStarScore + 100)×0.4 + hourLuckIndex×0.35 + dayRunFavorable×25) × 0.01 | ZWDS: Star Balance, QMDJ: Hour Luck, Bazi: Da Yun |
+| LVL | 99 | LEVEL = dayRunIndex + 1   (mulai dari 1 sampai ≈ 12) | Bazi: Da Yun Index |
+| EXP | 100% | EXP% = ((currentAge − daYunStartAge) / 10.0) × 100 | Bazi: Usia dalam Da Yun |
 
-4.1  Resonance Score (EKSKLUSIF — Tidak Ada di Konsep Lain)
-Resonance Score adalah meta-stat tunggal yang merangkum KESELARASAN TOTAL antara profil user dengan waktu sekarang. Ini adalah kontribusi utama Claude:
-RESONANCE = (HP_norm×0.2 + LUCK_norm×0.3 + DaYun_norm×0.2 + QMDJ_norm×0.2 + IChing_norm×0.1) × 100
-  0–30: CHAOS ZONE — musuh kuat, quest sulit, hindari keputusan besar
-  31–60: BALANCED REALM — standar, musuh normal, quest rutin
-  61–85: MOMENTUM ZONE — LUCK buff aktif, quest bonus tersedia
-  86–100: ASCENSION STATE — semua stat +10%, achievement unlock eligible
-4.2  Element Affinity Radar (5 Elemen)
-ELEMEN
-SIMBOL
-VISUAL (WARNA)
-PENGARUH UTAMA STAT
-MUSIM KUAT
-Kayu (木)
-🌿
-Hijau Neon #39FF14
-AGI +15%, MP +5%
-Semi (Feb–Apr)
-Api (火)
-🔥
-Merah Bara #FF4500
-STR +15%, MP +10%
-Panas (Mei–Jul)
-Tanah (土)
-⛰️
-Emas Tua #DAA520
-DEF +15%, HP +5%
-Peralihan musim
-Logam (金)
-⚔️
-Perak #C0C0C0
-STR +10%, DEF +10%
-Gugur (Agu–Okt)
-Air (水)
-🌊
-Biru Elektrik #00BFFF
-MP +20%, LUCK +10%
-Dingin (Nov–Jan)
+### 4.1 Resonance Score (EKSKLUSIF — Tidak Ada di Konsep Lain)
+Resonance Score adalah meta-stat tunggal yang merangkum KESELARASAN TOTAL antara profil user dengan waktu sekarang. Ini adalah kontribusi utama Claude:  
+RESONANCE = (HP_norm×0.2 + LUCK_norm×0.3 + DaYun_norm×0.2 + QMDJ_norm×0.2 + IChing_norm×0.1) × 100  
+0–30: CHAOS ZONE — musuh kuat, quest sulit, hindari keputusan besar  
+31–60: BALANCED REALM — standar, musuh normal, quest rutin  
+61–85: MOMENTUM ZONE — LUCK buff aktif, quest bonus tersedia  
+86–100: ASCENSION STATE — semua stat +10%, achievement unlock eligible
 
-5. WEAPON, BEAST & SKILL SYSTEM
-5.1  Weapon System (Penyempurnaan dari Semua Konsep)
-PARAMETER
-SUMBER
-FORMULA
-CONTOH OUTPUT
-Tipe Senjata
-Elemen terkuat ke-2 (bukan ke-1)
-Switch(secondaryElement)
-Api → Pedang (STR), Air → Tombak (AGI+DEF)
-Nama Senjata
-DM + NaYin + BintangOfensif dominan
-Generate dari template library
-'Crimson Phoenix Saber' (Api+Metal)
-Weapon Power
-ZWDS Wealth Palace + 7Killings score
-power = wealthScore×0.6 + sha×0.4
-power = 78/100
-Weapon Level
-Index Da Yun saat ini
-level = dayRunIndex + 1
-Da Yun ke-4 → Weapon Lv.5
-Special Effect
-Bintang Hua Lu / Hua Quan di pilar
-Jika HuaLu aktif: +20% power
-Glow Emas saat Da Yun Hua Lu
+### 4.2 Element Affinity Radar (5 Elemen)
 
+| ELEMEN | SIMBOL | VISUAL (WARNA) | PENGARUH UTAMA STAT | MUSIM KUAT |
+|--------|--------|----------------|---------------------|------------|
+| Kayu (木) | 🌿 | Hijau Neon #39FF14 | AGI +15%, MP +5% | Semi (Feb–Apr) |
+| Api (火) | 🔥 | Merah Bara #FF4500 | STR +15%, MP +10% | Panas (Mei–Jul) |
+| Tanah (土) | ⛰️ | Emas Tua #DAA520 | DEF +15%, HP +5% | Peralihan musim |
+| Logam (金) | ⚔️ | Perak #C0C0C0 | STR +10%, DEF +10% | Gugur (Agu–Okt) |
+| Air (水) | 🌊 | Biru Elektrik #00BFFF | MP +20%, LUCK +10% | Dingin (Nov–Jan) |
 
-5.2  Beast System
-ASPEK
-SUMBER
-FORMULA
-DETAIL
-Hewan Utama
-Shio tahun lahir
-Lookup table shio → beast class
-Shio Naga → Azure Dragon (DEF+20%)
-Elemen Beast
-NaYin elemen tahun lahir
-naYinElement → beast element
-NaYin Api → beast punya fire aura
-Passive Skill
-TianMa + dominantPalaceWeight
-buff = palaceWeight × 5%
-TianMa aktif: +10% AGI all stats
-Beast Level
-Sama dengan Weapon Level
-level = dayRunIndex + 1
-Naik otomatis masuk Da Yun baru
-Evolution
-Milestone: LUCK > 90 selama 7 hari berturut
-Unlock evolution mode
-Azure Dragon → Celestial Dragon (+35% DEF)
+## 5. WEAPON, BEAST & SKILL SYSTEM
 
+### 5.1 Weapon System (Penyempurnaan dari Semua Konsep)
 
-5.3  Skill Tree: 10 Dewa (十神) — Sistem Terlengkap
+| PARAMETER | SUMBER | FORMULA | CONTOH OUTPUT |
+|-----------|--------|---------|---------------|
+| Tipe Senjata | Elemen terkuat ke-2 (bukan ke-1) | Switch(secondaryElement) | Api → Pedang (STR), Air → Tombak (AGI+DEF) |
+| Nama Senjata | DM + NaYin + BintangOfensif dominan | Generate dari template library | 'Crimson Phoenix Saber' (Api+Metal) |
+| Weapon Power | ZWDS Wealth Palace + 7Killings score | power = wealthScore×0.6 + sha×0.4 | power = 78/100 |
+| Weapon Level | Index Da Yun saat ini | level = dayRunIndex + 1 | Da Yun ke-4 → Weapon Lv.5 |
+| Special Effect | Bintang Hua Lu / Hua Quan di pilar | Jika HuaLu aktif: +20% power | Glow Emas saat Da Yun Hua Lu |
+
+### 5.2 Beast System
+
+| ASPEK | SUMBER | FORMULA | DETAIL |
+|-------|--------|---------|--------|
+| Hewan Utama | Shio tahun lahir | Lookup table shio → beast class | Shio Naga → Azure Dragon (DEF+20%) |
+| Elemen Beast | NaYin elemen tahun lahir | naYinElement → beast element | NaYin Api → beast punya fire aura |
+| Passive Skill | TianMa + dominantPalaceWeight | buff = palaceWeight × 5% | TianMa aktif: +10% AGI all stats |
+| Beast Level | Sama dengan Weapon Level | level = dayRunIndex + 1 | Naik otomatis masuk Da Yun baru |
+| Evolution | Milestone: LUCK > 90 selama 7 hari berturut | Unlock evolution mode | Azure Dragon → Celestial Dragon (+35% DEF) |
+
+### 5.3 Skill Tree: 10 Dewa (十神) — Sistem Terlengkap
 10 Dewa dipetakan langsung ke Skill tree RPG. Setiap Dewa = 1 skill kategori dengan sub-skill.
-10 DEWA
-SKILL GAME
-EFEK GAME
-FORMULA BOBOT
-Zheng Guan (官)
-Leadership
-+10% DEF, Quest bonus
-Σ(pilar×posisiBobot) norm ke 0–10
-Qi Sha (杀)
-Combat Mastery
-+15% STR, Enemy dmg reduction
-Sama, tapi pilar bulan ×1.5
-Zheng Yin (印)
-Wisdom
-+15% MP, CD reduction
-Posisi jam bonus ×0.8
-Pian Yin (枭)
-Intuition
-+10% LUCK, Hidden quest unlock
-Jika pun, penalty −0.2
-Shi Shen (食)
-Creativity
-+10% MP, Craft buff
-Skor kreatif dari stem+branch
-Shang Guan (伤)
-Rebellion
-+20% AGI, Bypass penalty
-Konflik dewa boost score
-Zheng Cai (财)
-Wealth Mastery
-+15% STR, Bonus LUCK drop
-Elemen yang DM control
-Pian Cai (偏财)
-Risk Taker
-+20% LUCK, Volatile buff
-Cai di pilar jam paling kuat
-Jie Cai (劫)
-Competition
-+5% all stats (short duration)
-Penalti jika clash dgn pilar
-Bi Jian (比)
-Self Power
-+10% HP, Regen buff
-DM elemen sendiri di pilar
 
-6. ENEMY GENERATION & QUEST SYSTEM
-6.1  Enemy Decision Tree (Lebih Detail dari Semua Konsep)
+| 10 DEWA | SKILL GAME | EFEK GAME | FORMULA BOBOT |
+|---------|------------|-----------|---------------|
+| Zheng Guan (官) | Leadership | +10% DEF, Quest bonus | Σ(pilar×posisiBobot) norm ke 0–10 |
+| Qi Sha (杀) | Combat Mastery | +15% STR, Enemy dmg reduction | Sama, tapi pilar bulan ×1.5 |
+| Zheng Yin (印) | Wisdom | +15% MP, CD reduction | Posisi jam bonus ×0.8 |
+| Pian Yin (枭) | Intuition | +10% LUCK, Hidden quest unlock | Jika pun, penalty −0.2 |
+| Shi Shen (食) | Creativity | +10% MP, Craft buff | Skor kreatif dari stem+branch |
+| Shang Guan (伤) | Rebellion | +20% AGI, Bypass penalty | Konflik dewa boost score |
+| Zheng Cai (财) | Wealth Mastery | +15% STR, Bonus LUCK drop | Elemen yang DM control |
+| Pian Cai (偏财) | Risk Taker | +20% LUCK, Volatile buff | Cai di pilar jam paling kuat |
+| Jie Cai (劫) | Competition | +5% all stats (short duration) | Penalti jika clash dgn pilar |
+| Bi Jian (比) | Self Power | +10% HP, Regen buff | DM elemen sendiri di pilar |
+
+## 6. ENEMY GENERATION & QUEST SYSTEM
+
+### 6.1 Enemy Decision Tree (Lebih Detail dari Semua Konsep)
 Hierarki pengecekan dilakukan urut dari atas. Yang pertama trigger = enemy yang di-spawn:
-#
-KONDISI TRIGGER
-TIPE ENEMY
-BASE POWER
-COUNTER / QUEST
-1
-Clash hari + QMDJ buruk + IChingVolatility > 70
-BOSS: Chaos Emperor ☠️
-80–100
-Semua quest aktif, retreat recommended
-2
-Clash hari + clashScore > 60
-ELITE: Time Wraith ⚔️
-60–80
-Elemen counter + hindari arah clash
-3
-Kong Wang aktif (Void Day)
-DEBUFF: Void Specter 👻
-30–60
-Minimal aktivitas, meditasi/refleksi
-4
-Wu Huang aktif di arah tertentu
-DIR BOSS: Earth Tyrant 🏔️
-50–75
-Hindari arah Wu Huang sepanjang hari
-5
-San Sha di 1+ arah
-DIR MOB: Triple Sha 🐉🐉🐉
-30–55
-Hindari arah San Sha, quest arah aman
-6
-Da Yun transisi (±1 tahun)
-EVENT: Transition Storm 🌪️
-40–70
-Persiapan Da Yun baru, achievement unlock
-7
-Pian Yin / Pian Cai terlalu dominan
-INTERNAL: Temptation ⚡
-20–40
-Quest keseimbangan (olahraga, meditasi)
-8
-Jam buruk QMDJ aktif sekarang
-TIME: Dark Hour 🌑
-10–35
-Hindari jam itu, quest produktivitas
 
+| # | KONDISI TRIGGER | TIPE ENEMY | BASE POWER | COUNTER / QUEST |
+|---|-----------------|------------|------------|-----------------|
+| 1 | Clash hari + QMDJ buruk + IChingVolatility > 70 | BOSS: Chaos Emperor ☠️ | 80–100 | Semua quest aktif, retreat recommended |
+| 2 | Clash hari + clashScore > 60 | ELITE: Time Wraith ⚔️ | 60–80 | Elemen counter + hindari arah clash |
+| 3 | Kong Wang aktif (Void Day) | DEBUFF: Void Specter 👻 | 30–60 | Minimal aktivitas, meditasi/refleksi |
+| 4 | Wu Huang aktif di arah tertentu | DIR BOSS: Earth Tyrant 🏔️ | 50–75 | Hindari arah Wu Huang sepanjang hari |
+| 5 | San Sha di 1+ arah | DIR MOB: Triple Sha 🐉🐉🐉 | 30–55 | Hindari arah San Sha, quest arah aman |
+| 6 | Da Yun transisi (±1 tahun) | EVENT: Transition Storm 🌪️ | 40–70 | Persiapan Da Yun baru, achievement unlock |
+| 7 | Pian Yin / Pian Cai terlalu dominan | INTERNAL: Temptation ⚡ | 20–40 | Quest keseimbangan (olahraga, meditasi) |
+| 8 | Jam buruk QMDJ aktif sekarang | TIME: Dark Hour 🌑 | 10–35 | Hindari jam itu, quest produktivitas |
 
-6.2  Quest System — Counter-Strategy Engine
+### 6.2 Quest System — Counter-Strategy Engine
 Quest bukan daftar acak. Setiap quest adalah respons algoritmik terhadap kondisi chart hari ini.
-KONDISI TRIGGER
-QUEST YANG MUNCUL
-REWARD VALUE
-DURASI
-TIPE
-Elemen yang kekurangan (< 10%)
-Kenakan warna elemen tersebut
-+5% pada stat terkait
-1 hari
-Lifestyle
-QMDJ menunjukkan jam puncak
-Jadwalkan aktivitas krusial di jam itu
-+15% EXP, +LUCK buff
-2 jam
-Timing
-Arah baik QMDJ hari ini
-Berangkat dari arah tersebut
-+10% Daily LUCK
-Pagi hari
-Direction
-San Sha / Wu Huang aktif
-Hindari arah berbahaya hari ini
-+20% DEF buff sepanjang hari
-1 hari
-Avoidance
-Elemen clash dominan
-Konsumsi makanan elemen counter
-Netralisasi 30% penalti enemy
-Saat makan
-Health
-Da Yun favorabel tinggi
-Ambil keputusan besar hari ini
-+50% Achievement XP
-1 hari
-Milestone
-I Ching Hexagram: Stabil
-Lakukan pekerjaan detail/rutinitas
-Stamina regen ×2
-Hari penuh
-Flow
-Void Day (Kong Wang)
-Hindari kontrak / deal besar
-Avert 'bad contract' penalty
-1 hari
-Protection
 
-7. FITUR EKSKLUSIF CLAUDE — TIDAK ADA DI KONSEP LAIN
-7.1  Social Pillar System (Party RPG Berbasis Kompatibilitas)
+| KONDISI TRIGGER | QUEST YANG MUNCUL | REWARD VALUE | DURASI | TIPE |
+|-----------------|-------------------|--------------|--------|------|
+| Elemen yang kekurangan (< 10%) | Kenakan warna elemen tersebut | +5% pada stat terkait | 1 hari | Lifestyle |
+| QMDJ menunjukkan jam puncak | Jadwalkan aktivitas krusial di jam itu | +15% EXP, +LUCK buff | 2 jam | Timing |
+| Arah baik QMDJ hari ini | Berangkat dari arah tersebut | +10% Daily LUCK | Pagi hari | Direction |
+| San Sha / Wu Huang aktif | Hindari arah berbahaya hari ini | +20% DEF buff sepanjang hari | 1 hari | Avoidance |
+| Elemen clash dominan | Konsumsi makanan elemen counter | Netralisasi 30% penalti enemy | Saat makan | Health |
+| Da Yun favorabel tinggi | Ambil keputusan besar hari ini | +50% Achievement XP | 1 hari | Milestone |
+| I Ching Hexagram: Stabil | Lakukan pekerjaan detail/rutinitas | Stamina regen ×2 | Hari penuh | Flow |
+| Void Day (Kong Wang) | Hindari kontrak / deal besar | Avert 'bad contract' penalty | 1 hari | Protection |
+
+## 7. FITUR EKSKLUSIF CLAUDE — TIDAK ADA DI KONSEP LAIN
+
+### 7.1 Social Pillar System (Party RPG Berbasis Kompatibilitas)
 User dapat menambahkan chart orang lain (pasangan, partner bisnis, keluarga). Sistem akan menghitung sinergi antar chart secara real-time.
-PARAMETER SOSIAL
-CARA HITUNG
-EFEK GAME
-Harmony Score
-He (合) antara DM user vs DM target → bobot 0–100
-Party buff: jika > 70, semua stat +5% saat bersama
-Clash Alert
-Clash (冲) antar pilar hari vs pilar target
-Warning banner saat hari clash dengan partner
-Complement Bond
-Elemen yang saling generate antara dua chart
-Passive: partner kayu + user air = MP regen bersama
-Da Yun Sync
-Jika kedua chart sedang Da Yun favorable bersamaan
-Double Momentum Event — quest bonus muncul bersama
-Conflict Day
-Hari clash pilar berdua secara bersamaan
-Enemy power ×1.5, quest: 'komunikasi hati-hati hari ini'
 
+| PARAMETER SOSIAL | CARA HITUNG | EFEK GAME |
+|------------------|-------------|-----------|
+| Harmony Score | He (合) antara DM user vs DM target → bobot 0–100 | Party buff: jika > 70, semua stat +5% saat bersama |
+| Clash Alert | Clash (冲) antar pilar hari vs pilar target | Warning banner saat hari clash dengan partner |
+| Complement Bond | Elemen yang saling generate antara dua chart | Passive: partner kayu + user air = MP regen bersama |
+| Da Yun Sync | Jika kedua chart sedang Da Yun favorable bersamaan | Double Momentum Event — quest bonus muncul bersama |
+| Conflict Day | Hari clash pilar berdua secara bersamaan | Enemy power ×1.5, quest: 'komunikasi hati-hati hari ini' |
 
-7.2  Progression Memory System (90-Day History)
+### 7.2 Progression Memory System (90-Day History)
 Room Database menyimpan snapshot GameState setiap hari. Ini memungkinkan fitur-fitur berikut yang tidak bisa dilakukan konsep lain:
-FITUR
-DATA YANG DISIMPAN
-MANFAAT UNTUK USER
-LUCK History Graph
-LUCK score per hari selama 90 hari
-User bisa lihat pola naik-turun dan validasi prediksi vs kenyataan
-Enemy Archive
-Semua enemy yang pernah spawn + power-nya
-Galeri 'monster yang pernah dihadapi', achievement tracker
-Quest Completion Rate
-Berapa % quest diselesaikan per minggu
-Analisis perilaku: quest jenis apa yang konsisten dilakukan
-Peak Hour Tracking
-Jam mana yang konsisten productive (user input)
-Personal best-hour pattern, lebih akurat dari prediksi QMDJ saja
-Da Yun Comparison
-Snapshot awal dan akhir setiap Da Yun
-Sejarah 'chapter' hidup dalam RPG, bisa direviu
 
+| FITUR | DATA YANG DISIMPAN | MANFAAT UNTUK USER |
+|-------|--------------------|--------------------|
+| LUCK History Graph | LUCK score per hari selama 90 hari | User bisa lihat pola naik-turun dan validasi prediksi vs kenyataan |
+| Enemy Archive | Semua enemy yang pernah spawn + power-nya | Galeri 'monster yang pernah dihadapi', achievement tracker |
+| Quest Completion Rate | Berapa % quest diselesaikan per minggu | Analisis perilaku: quest jenis apa yang konsisten dilakukan |
+| Peak Hour Tracking | Jam mana yang konsisten productive (user input) | Personal best-hour pattern, lebih akurat dari prediksi QMDJ saja |
+| Da Yun Comparison | Snapshot awal dan akhir setiap Da Yun | Sejarah 'chapter' hidup dalam RPG, bisa direviu |
 
-7.3  Adaptive Difficulty Scaling
-Enemy power bukan angka flat. Dia ber-scale berdasarkan posisi user dalam Da Yun cycle:
-enemyPower = basePower × (1 + (1 − dayRunFavorable) × 0.5) × transitionMultiplier
-  transitionMultiplier: ±1 tahun dari pergantian Da Yun = ×1.5 (boss phase)
-  Da Yun awal (tahun 1–2): ×1.2 (adjustment phase, musuh agak kuat)
-  Da Yun tengah (tahun 4–7): ×0.8 (stable phase, musuh lebih lemah)
-8. TECHNICAL STACK & IMPLEMENTASI ANDROID
-KOMPONEN
-TEKNOLOGI
-ALASAN DIPILIH
-CATATAN IMPLEMENTASI
-Language
-Kotlin 1.9+
-Null safety, coroutines native
-Min SDK 26 (Android 8) untuk java.time.*
-UI Framework
-Jetpack Compose
-Custom Canvas untuk radar/kompas
-Gunakan Canvas API untuk kompas & I Ching wheel
-Async
-Coroutines + Flow
-Bazi/ZWDS berat, wajib background
-Dispatchers.Default untuk semua metaphysics calc
-Local DB
-Room + DataStore
-Achievement Room, preferensi DataStore
-FTS untuk search achievement history
-Date/Time
-java.time.ZonedDateTime
-Presisi zona waktu + solar time
-BigDecimal untuk koordinat solar time correction
-Calendar Algo
-Custom Ephemeris Library
-Solar term presisi menit
-Open-source: lunar4j atau custom port
-State Mgmt
-StateFlow + ViewModel
-Unidirectional data flow
-GameStateViewModel → semua screen subscribe
-Anti-Cheat
-NTP Sync (jika online)
-Cegah manipulasi jam sistem
-Fallback ke system clock jika offline, log discrepancy
-Notifikasi
-WorkManager
-Background update tiap 2 jam
-Trigger: enemy baru muncul, jam puncak akan datang
-Audit Export
-CSV via FileProvider
-Pakar bisa validasi angka
-Export semua raw metaphysics values ke CSV
+### 7.3 Adaptive Difficulty Scaling
+Enemy power bukan angka flat. Dia ber-scale berdasarkan posisi user dalam Da Yun cycle:  
+enemyPower = basePower × (1 + (1 − dayRunFavorable) × 0.5) × transitionMultiplier  
+transitionMultiplier: ±1 tahun dari pergantian Da Yun = ×1.5 (boss phase)  
+Da Yun awal (tahun 1–2): ×1.2 (adjustment phase, musuh agak kuat)  
+Da Yun tengah (tahun 4–7): ×0.8 (stable phase, musuh lebih lemah)
 
+## 8. TECHNICAL STACK & IMPLEMENTASI ANDROID
 
-8.1  Data Architecture (Kotlin Data Classes)
+| KOMPONEN | TEKNOLOGI | ALASAN DIPILIH | CATATAN IMPLEMENTASI |
+|----------|-----------|----------------|----------------------|
+| Language | Kotlin 1.9+ | Null safety, coroutines native | Min SDK 26 (Android 8) untuk java.time.* |
+| UI Framework | Jetpack Compose | Custom Canvas untuk radar/kompas | Gunakan Canvas API untuk kompas & I Ching wheel |
+| Async | Coroutines + Flow | Bazi/ZWDS berat, wajib background | Dispatchers.Default untuk semua metaphysics calc |
+| Local DB | Room + DataStore | Achievement Room, preferensi DataStore | FTS untuk search achievement history |
+| Date/Time | java.time.ZonedDateTime | Presisi zona waktu + solar time | BigDecimal untuk koordinat solar time correction |
+| Calendar Algo | Custom Ephemeris Library | Solar term presisi menit | Open-source: lunar4j atau custom port |
+| State Mgmt | StateFlow + ViewModel | Unidirectional data flow | GameStateViewModel → semua screen subscribe |
+| Anti-Cheat | NTP Sync (jika online) | Cegah manipulasi jam sistem | Fallback ke system clock jika offline, log discrepancy |
+| Notifikasi | WorkManager | Background update tiap 2 jam | Trigger: enemy baru muncul, jam puncak akan datang |
+| Audit Export | CSV via FileProvider | Pakar bisa validasi angka | Export semua raw metaphysics values ke CSV |
+
+### 8.1 Data Architecture (Kotlin Data Classes)
 Struktur data kunci yang wajib didefinisikan terlebih dahulu sebelum coding UI:
-DATA CLASS
-FIELD UTAMA
-DIPAKAI OLEH
-UserBirthData
-name, birthYear/Month/Day/Hour, lat, lng, gender
-Semua engine (static input)
-BaziResult
-pillar[4], dayMaster, elementWeights[5], tenGodWeights[10], clashScore, daYunIndex
-StatMapper, EnemySpawner
-ZwdsResult
-palaceStars[12], goodStarScore, badStarScore, palaceWeight[12]
-HP/MP/LUCK mapper
-QmdjResult
-juNumber, doorScores[8], starScores[9], directionLuck[8], hourRisk
-Realtime update, Quest generator
-FengShuiResult
-auspiciousDir[], shaDir[], wuHuangDir, sanShaDir[]
-Enemy Direction Boss, Quest
-IChingResult
-hexagramId, category: Enum(STABLE/TRANSIT/CONFLICT/MOMENTUM)
-VolatilityIndex, Enemy multiplier
-NormalizedProfile
-Semua field di atas dikonversi ke Float 0.0–1.0
-GameStateMapper
-GameState
-playerStats: GameStats, enemies: List<Enemy>, quests: List<Quest>, resonanceScore: Float
-UI Layer (semua screen)
-DailySnapshot
-date, gameState, questCompletionRate → disimpan ke Room
-Progression Memory, History Graph
 
-9. DEVELOPMENT MILESTONES — ROADMAP CLAUDE
-FASE
-NAMA FASE
-DELIVERABLE
-ACCEPTANCE CRITERIA
-0
-Foundation
-Calendar Engine: Gregorian→Lunar, Solar Term, Jia Zi (text output)
-Bandingkan hasil dengan 10 kasus manual dari pakar
-1
-Bazi Core
-BaziCalculator: 4 pilar, DM, 10 Dewa, Da Yun, normalisasi
-Hasil match dengan software Bazi terpercaya (Bazi Master)
-2
-ZWDS + QMDJ
-ZwdsCalculator + QmdjCalculator, integrasi ke NormalizedProfile
-12 palace benar, Ju QMDJ benar untuk 5 jam sampel
-3
-Game Core
-StatMapper, EnemySpawner, QuestGenerator (teks, belum UI)
-GameState output JSON dapat dibaca & diaudit pakar
-4
-UI Base
-Compose: Player Card, Daily Card, stat bars (tanpa animasi)
-Semua angka render benar dari GameState
-5
-Interactivity
-Timeline slider, Enemy panel, Quest checkbox, Modal audit
-Slider mengubah data real-time, semua modal tampil formula
-6
-Exclusive Features
-Social Pillar System, Progression Memory, Adaptive Difficulty
-History graph 90 hari, party buff aktif saat harmony > 70
-7
-Polish
-Animasi, efek elemen, notifikasi WorkManager, Export CSV
-APK siap rilis, ukuran < 30MB, startup < 2 detik
+| DATA CLASS | FIELD UTAMA | DIPAKAI OLEH |
+|------------|-------------|-------------|
+| UserBirthData | name, birthYear/Month/Day/Hour, lat, lng, gender | Semua engine (static input) |
+| BaziResult | pillar[4], dayMaster, elementWeights[5], tenGodWeights[10], clashScore, daYunIndex | StatMapper, EnemySpawner |
+| ZwdsResult | palaceStars[12], goodStarScore, badStarScore, palaceWeight[12] | HP/MP/LUCK mapper |
+| QmdjResult | juNumber, doorScores[8], starScores[9], directionLuck[8], hourRisk | Realtime update, Quest generator |
+| FengShuiResult | auspiciousDir[], shaDir[], wuHuangDir, sanShaDir[] | Enemy Direction Boss, Quest |
+| IChingResult | hexagramId, category: Enum(STABLE/TRANSIT/CONFLICT/MOMENTUM) | VolatilityIndex, Enemy multiplier |
+| NormalizedProfile | Semua field di atas dikonversi ke Float 0.0–1.0 | GameStateMapper |
+| GameState | playerStats: GameStats, enemies: List<Enemy>, quests: List<Quest>, resonanceScore: Float | UI Layer (semua screen) |
+| DailySnapshot | date, gameState, questCompletionRate → disimpan ke Room | Progression Memory, History Graph |
 
+## 9. DEVELOPMENT MILESTONES — ROADMAP CLAUDE
 
-10. PERBANDINGAN KONSEP: CLAUDE vs GPT vs DEEPSEEK vs GEMINI
-ASPEK
-Claude ✦
-GPT
-DeepSeek
-Gemini
-Layer Arsitektur
-6 Layer
-4 Layer
-4 Layer
-4 Layer
-Calendar Engine (L0→L1)
-✅ Explicit
-❌ Skip
-❌ Skip
-⚠️ Partial
-Solar Time Correction
-✅ Detail
-❌ Tidak ada
-❌ Tidak ada
-❌ Tidak ada
-Formula Bazi Granular
-✅ Per field
-⚠️ General
-✅ Cukup detail
-⚠️ General
-Semua 5 Engine Terintegrasi
-✅ Cross-input
-✅ Ada
-✅ Ada
-✅ Ada
-Resonance Score (meta-stat)
-✅ Eksklusif
-❌
-❌
-❌
-Social / Party System
-✅ Eksklusif
-❌
-❌
-❌
-Progression Memory 90hr
-✅ Eksklusif
-❌
-❌
-❌
-Adaptive Enemy Scaling
-✅ Eksklusif
-❌
-❌
-❌
-Anti-Cheat (NTP)
-✅ Ada
-❌
-❌
-✅ Ada
-Data Class Architecture
-✅ Lengkap
-⚠️ Partial
-❌
-✅ Ada
-Audit Export CSV
-✅ Ada
-❌
-❌
-❌
-I Ching: Deterministic
-✅ Deterministic
-⚠️ Tidak jelas
-⚠️ Spin random
-⚠️ Tidak jelas
-Beast Evolution System
-✅ Ada
-⚠️ Basic
-⚠️ Basic
-❌
-Development Milestones
-8 Fase + AC
-4 Fase
-❌ Tidak ada
-4 Fase
+| FASE | NAMA FASE | DELIVERABLE | ACCEPTANCE CRITERIA |
+|------|-----------|-------------|---------------------|
+| 0 | Foundation | Calendar Engine: Gregorian→Lunar, Solar Term, Jia Zi (text output) | Bandingkan hasil dengan 10 kasus manual dari pakar |
+| 1 | Bazi Core | BaziCalculator: 4 pilar, DM, 10 Dewa, Da Yun, normalisasi | Hasil match dengan software Bazi terpercaya (Bazi Master) |
+| 2 | ZWDS + QMDJ | ZwdsCalculator + QmdjCalculator, integrasi ke NormalizedProfile | 12 palace benar, Ju QMDJ benar untuk 5 jam sampel |
+| 3 | Game Core | StatMapper, EnemySpawner, QuestGenerator (teks, belum UI) | GameState output JSON dapat dibaca & diaudit pakar |
+| 4 | UI Base | Compose: Player Card, Daily Card, stat bars (tanpa animasi) | Semua angka render benar dari GameState |
+| 5 | Interactivity | Timeline slider, Enemy panel, Quest checkbox, Modal audit | Slider mengubah data real-time, semua modal tampil formula |
+| 6 | Exclusive Features | Social Pillar System, Progression Memory, Adaptive Difficulty | History graph 90 hari, party buff aktif saat harmony > 70 |
+| 7 | Polish | Animasi, efek elemen, notifikasi WorkManager, Export CSV | APK siap rilis, ukuran < 30MB, startup < 2 detik |
 
+## 10. PERBANDINGAN KONSEP: CLAUDE vs GPT vs DEEPSEEK vs GEMINI
 
+| ASPEK | Claude ✦ | GPT | DeepSeek | Gemini |
+|-------|----------|-----|----------|--------|
+| Layer Arsitektur | 6 Layer | 4 Layer | 4 Layer | 4 Layer |
+| Calendar Engine (L0→L1) | ✅ Explicit | ❌ Skip | ❌ Skip | ⚠️ Partial |
+| Solar Time Correction | ✅ Detail | ❌ Tidak ada | ❌ Tidak ada | ❌ Tidak ada |
+| Formula Bazi Granular | ✅ Per field | ⚠️ General | ✅ Cukup detail | ⚠️ General |
+| Semua 5 Engine Terintegrasi | ✅ Cross-input | ✅ Ada | ✅ Ada | ✅ Ada |
+| Resonance Score (meta-stat) | ✅ Eksklusif | ❌ | ❌ | ❌ |
+| Social / Party System | ✅ Eksklusif | ❌ | ❌ | ❌ |
+| Progression Memory 90hr | ✅ Eksklusif | ❌ | ❌ | ❌ |
+| Adaptive Enemy Scaling | ✅ Eksklusif | ❌ | ❌ | ❌ |
+| Anti-Cheat (NTP) | ✅ Ada | ❌ | ❌ | ✅ Ada |
+| Data Class Architecture | ✅ Lengkap | ⚠️ Partial | ❌ | ✅ Ada |
+| Audit Export CSV | ✅ Ada | ❌ | ❌ | ❌ |
+| I Ching: Deterministic | ✅ Deterministic | ⚠️ Tidak jelas | ⚠️ Spin random | ⚠️ Tidak jelas |
+| Beast Evolution System | ✅ Ada | ⚠️ Basic | ⚠️ Basic | ❌ |
+| Development Milestones | 8 Fase + AC | 4 Fase | ❌ Tidak ada | 4 Fase |
 
-
-
-CELESTIAL CORE ENGINE — Konsep Final oleh Claude (Anthropic)
+CELESTIAL CORE ENGINE — Konsep Final oleh Claude (Anthropic)  
 Tidak ada angka dekoratif. Semua berasal dari algoritma yang bisa diaudit.
-
-
