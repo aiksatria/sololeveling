@@ -1,0 +1,185 @@
+## Konsep Final Aplikasi Bazi Game – Status Panel ala Solo Leveling  
+**Oleh: DeepSeek**  
+*Untuk tim pengembang – konsep non-koding, siap dijadikan acuan implementasi.*
+
+---
+
+### 1. Pendahuluan
+Aplikasi ini menggabungkan perhitungan metafisika China (Bazi, Zi Wei Dou Shu, Qi Men Dun Jia, Feng Shui, I Ching) dengan tampilan antarmuka bergaya game RPG. Tujuannya agar pengguna merasa sebagai karakter utama dalam hidupnya, dengan data akurat dan real-time yang dapat diverifikasi oleh ahli. Setiap elemen visual (stat, musuh, quest, dll.) berasal dari rumus matematis, bukan angka acak. Seluruh tampilan bersifat interaktif: klik pada elemen apa pun akan membuka modal yang menampilkan detail perhitungan klasik.
+
+---
+
+### 2. Sumber Data Metafisika dan Perhitungan
+Aplikasi menggunakan data kelahiran pengguna (nama, tanggal, jam, lokasi) serta waktu real-time saat ini untuk menghasilkan:
+- **Bazi (四柱)**: 4 pilar (tahun, bulan, hari, jam) dengan batang langit dan cabang bumi. Menghasilkan Day Master, 10 Dewa, kekuatan elemen, Da Yun (periode 10 tahun).
+- **Zi Wei Dou Shu (紫微斗数)**: Peta 12 rumah dengan bintang utama dan tambahan. Menghasilkan skor keberuntungan bawaan, bintang baik/buruk, dan pengaruh pada aspek kehidupan.
+- **Qi Men Dun Jia (奇门遁甲)**: Peta waktu (jam, hari) dengan pintu, bintang, dewa. Menghasilkan nilai keberuntungan jam dan arah terbaik.
+- **Feng Shui (风水) Harian**: Arah baik (Cai Shen, Xi Shen, Fu De) dan arah buruk (San Sha, Wu Huang) berdasarkan tahun, bulan, hari.
+- **I Ching (易经)**: Heksagram berdasarkan waktu atau putaran roda.
+
+Semua perhitungan dilakukan secara real-time setiap kali aplikasi dibuka atau setiap jam (jika diizinkan). Data kelahiran disimpan lokal.
+
+---
+
+### 3. Pemetaan ke Elemen Game
+Berikut adalah pemetaan dari data metafisika ke elemen game yang ditampilkan di antarmuka.
+
+#### 3.1. Player Stats (Status Karakter)
+| Stat Game     | Sumber Data                                                                                               | Rumus / Interpretasi Singkat                                                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **HP**        | Elemen pendukung Day Master (DM) + skor kesehatan ZWDS                                                    | `HP = (total bobot elemen yang menghasilkan/membantu DM + skor kesehatan) / maks`<br>Contoh: DM Kayu → pendukung Kayu+Air.                                |
+| **MP**        | Elemen Air (spiritual) + Api (semangat) + bintang spiritual ZWDS                                          | `MP = (bobot Air + Api) * faktor + (bintang spiritual baik * 5)`                                                                                          |
+| **Stamina**   | Kekuatan Day Master + elemen Tanah (stabilitas)                                                           | `Stamina = (kekuatanDM * 10 + bobot Tanah * 0.5)`                                                                                                          |
+| **Level**     | Nomor Da Yun saat ini (dimulai dari 1)                                                                    | Level = index Da Yun + 1                                                                                                                                   |
+| **EXP**       | Sisa umur dalam Da Yun saat ini                                                                           | `EXP = (umur - awal Da Yun) / panjang Da Yun * 100`                                                                                                        |
+| **STR**       | Kekuatan DM + elemen Logam                                                                                | `STR = (kekuatanDM * 10 + bobot Logam * 0.8)`                                                                                                              |
+| **AGI**       | Elemen Kayu + bonus shio (Tikus, Kuda, Monyet) + bintang "Tốc"                                            | `AGI = (bobotKayu * 0.8) + bonusShio + bonusBintang`                                                                                                       |
+| **LUCK**      | ZWDS: selisih bintang baik dan buruk di rumah utama (Mệnh, Tài, Quan, Phúc)                               | `LUCK = (totalBaik - totalBuruk + 100) / 2`                                                                                                                |
+| **Element Affinity** | Persentase 5 elemen dalam Bazi                                                                      | Ditampilkan dalam chart radar kecil.                                                                                                                       |
+
+#### 3.2. Weapon (Senjata)
+- **Sumber**: Bintang ofensif di ZWDS (Vũ Khúc, Liêm Trinh, Phá Quân) atau elemen terkuat kedua.
+- **Atribut**: Nama, elemen, kekuatan (0-100), level.
+- **Level Weapon**: `floor(umur/10) + 1` atau naik saat memasuki Da Yun baru.
+- **Visual**: Ikon senjata dengan efek elemen (api, air, dll).
+
+#### 3.3. Beast (Makhluk Pendamping)
+- **Sumber**: Shio tahun lahir (hewan utama), bintang Thiên Mã, Na Yin tahun.
+- **Atribut**: Nama hewan, elemen, level, skill pasif (misal: +5% AGI).
+- **Level Beast**: Sama dengan level weapon.
+- **Visual**: Ikon hewan mitologi/futuristik.
+
+#### 3.4. Skill Tree (10 Dewa)
+- **Sumber**: Sepuluh dewa Bazi (Zheng Guan, Qi Sha, Zheng Yin, dll.) yang muncul di 4 pilar.
+- **Perhitungan**: Hitung kemunculan tiap dewa dengan bobot pilar (tahun=0.5, bulan=1, hari=1.2, jam=0.8), normalisasi 0-10.
+- **Visual**: Lingkaran radial dengan 10 segmen atau grid ikon. Klik untuk detail per dewa.
+
+#### 3.5. Inventory (Item)
+- **Sumber**: Rekomendasi Feng Shui (warna, arah, elemen) dan bintang baik yang dapat “dipakai”.
+- **Item Contoh**: “Warna Merah” (buff Api +5% selama 1 jam), “Jimat Timur” (arah Timur jadi lebih baik).
+- **Mekanisme**: Item didapat otomatis setiap hari berdasarkan analisis kebutuhan elemen. Terbatas 3-5 slot, bisa di-equip untuk buff sementara.
+
+#### 3.6. Companion (Party)
+- **Sumber**: Pilar tahun (leluhur), bulan (orang tua), jam (anak). Masing-masing memiliki elemen dan dewa.
+- **Efek**: Memberi bonus pasif jika elemennya selaras dengan DM (misal: companion tahun dengan elemen Kayu +5% STR).
+- **Visual**: Avatar kecil dengan nama pilar dan elemen.
+
+#### 3.7. Dungeon (Area Tantangan)
+- **Sumber**: Arah buruk Feng Shui (San Sha, Wu Huang) dan jam buruk Qi Men (pintu Du, Tử, Kinh).
+- **Atribut**: Nama dungeon (misal: “San Sha Selatan”), level kesulitan (1-5 bintang), waktu aktif (jam atau sepanjang hari), reward.
+- **Mekanisme**: Jika pengguna memilih arah atau waktu itu, mereka menghadapi tantangan (dalam game fiktif). Reward diberikan jika berhasil mengikuti saran (misal: tidak pergi ke arah itu).
+
+#### 3.8. Quest (Misi Harian)
+- **Sumber**: Rekomendasi dari Qi Men dan Feng Shui, serta cara mengatasi musuh.
+- **Contoh Quest**:
+  - “Hindari arah Selatan hari ini” (0/1) – reward +5% Daily Luck.
+  - “Gunakan jam 13-15 untuk aktivitas bisnis” (0/1) – reward +10% EXP.
+  - “Kenakan warna merah” (0/1) – reward +5% STR sementara.
+- **Visual**: Daftar dengan checkbox. Setelah dicentang, reward langsung diberikan (efek gamifikasi).
+
+#### 3.9. Achievement (Pencapaian)
+- **Sumber**: Milestone kehidupan (ulang tahun ke-30, memasuki Da Yun baru, melewati tahun konflik, dll.).
+- **Visual**: Medali/trophy yang terkumpul, dengan deskripsi dan tanggal raihan.
+
+#### 3.10. Daily Luck, Compass, I Ching, Timeline
+- **Daily Luck**: Progress bar besar dari Qi Men + Feng Shui (0-100%).
+- **Compass**: Lingkaran 24 arah dengan indikator warna (hijau=baik, merah=buruk). Arah terbaik ditandai.
+- **I Ching Wheel**: Roda yang dapat diputar. Menampilkan heksagram (misal: ䷋) dan interpretasi singkat.
+- **Timeline Slider**: Slider waktu dengan grafik fluktuasi keberuntungan per jam. Saat digeser, semua data (musuh, quest, arah) menyesuaikan prediksi untuk jam tersebut.
+
+#### 3.11. Musuh (Enemy)
+- **Sumber**: Elemen yang berlawanan dengan DM pada hari ini, Sha di arah tertentu, bintang buruk aktif.
+- **Atribut**: Nama musuh (misal: “Logam Foe”), kekuatan (0-100%), cara mengatasi (misal: “Perbanyak elemen Air”).
+- **Visual**: Ikon monster dengan progress bar kekuatan. Klik untuk modal detail.
+
+---
+
+### 4. Rancangan Antarmuka Pengguna (UI/UX)
+
+#### 4.1. Tata Letak Layar Utama (Mode Game)
+```
++---------------------------------------------------------------------------------------+
+| [TOP BAR]  Nama User  |  甲辰年 丙寅月 乙亥日  |  Shio: Naga  |  ⚠️ Alert: Selatan bahaya |
++---------------------------------------------------------------------------------------+
+|                                                                                       |
+|  +-----------------------------+  +-----------------------------------------------+  |
+|  | PLAYER CARD                 |  | DAILY CARD                                    |  |
+|  | [Avatar]                    |  | Daily Luck  [████████░░] 80%                 |  |
+|  | HP     [████████░░] 65%      |  | Compass      🧭 [Timur] (Baik)               |  |
+|  | MP     [████░░░░░░] 40%      |  | I Ching Wheel  [ 🔮 ]  Heksagram 12          |  |
+|  | Stamina[██████░░░░] 55%      |  +-----------------------------------------------+  |
+|  | Level 3  EXP [████░░░░░░] 10%|  +-----------------------------------------------+  |
+|  | STR 70  [███░░░░░░░]         |  | ENEMY LIST                                    |  |
+|  | AGI 55  [██░░░░░░░░]         |  | ⚔️ Logam Foe        [████████░░] 80%         |  |
+|  | LUCK 75 [███████░░░]         |  | 👹 Wu Huang (Selatan)[██████░░░░] 60%        |  |
+|  | [Element Radar]              |  | 🕘 Time Dungeon 13-15 [████░░░░░░] 40%       |  |
+|  | Weapon: [🔥 Pedang Api] Lv.3  |  +-----------------------------------------------+  |
+|  | Beast : [🐅 Harimau] Lv.2     |  +-----------------------------------------------+  |
+|  +-----------------------------+  | QUESTS                                        |  |
+|                                   | ☐ Hindari Selatan (0/1)  +5% Luck            |  |
+|  +-----------------------------+  | ☐ Jam 13-15 untuk bisnis +10% EXP            |  |
+|  | SKILL TREE (Mini)           |  +-----------------------------------------------+  |
+|  | [Radar chart 10 dewa]       |  +-----------------------------------------------+  |
+|  | (klik untuk detail)         |  | TIMELINE                                      |  |
+|  +-----------------------------+  | 00  03  06  09  12  15  18  21  24            |  |
+|                                   | [=====█=====█=====█=====] (grafik mini)       |  |
+|                                   | Slider: [------●------]  ▸ 14:30              |  |
+|                                   +-----------------------------------------------+  |
+|                                                                                       |
++---------------------------------------------------------------------------------------+
+| [BOTTOM BAR]  [Inventory]  [Skill Tree]  [Beasts]  [Dungeons]  [Achievements]       |
++---------------------------------------------------------------------------------------+
+```
+
+#### 4.2. Deskripsi Komponen
+- **Top Bar**: Informasi identitas dan peringatan cepat.
+- **Player Card**: Stat inti, elemen radar, weapon, beast. Semua bar dan angka dapat diklik.
+- **Daily Card**: Ringkasan harian (luck, arah, I Ching).
+- **Enemy List**: Daftar musuh dengan progress bar kekuatan.
+- **Quests**: Misi harian dengan checkbox.
+- **Timeline**: Slider dan grafik prediksi per jam.
+- **Bottom Bar**: Navigasi ke halaman detail masing-masing fitur.
+
+#### 4.3. Interaksi
+- **Klik pada bar/angka/ikon** → membuka modal popup futuristik yang menampilkan:
+  - Detail perhitungan klasik (tabel Bazi, daftar bintang, rumus).
+  - Ikon “?” untuk penjelasan metode.
+- **Klik pada musuh** → modal berisi sumber musuh, kekuatan, dan cara mengatasi.
+- **Klik pada quest** → modal penjelasan mengapa quest itu muncul.
+- **Slider timeline** → saat digeser, semua data (daily luck, musuh, quest, arah) berubah sesuai prediksi jam tersebut. Ada indikator waktu sekarang dan waktu yang dipilih.
+- **I Ching Wheel** → dapat diputar dengan sentuhan. Setelah berhenti, tampilkan heksagram. Klik heksagram untuk detail.
+- **Bottom navigation** → membuka halaman penuh dengan daftar item, skill tree lengkap, koleksi beast, dungeon aktif, dan achievement.
+
+#### 4.4. Desain Visual
+- Tema gelap dengan aksen neon (cyan, magenta, emas).
+- Font monospace untuk angka, sans-serif untuk teks.
+- Efek glitch halus pada angka saat berubah.
+- Animasi progress bar saat memuat data.
+
+---
+
+### 5. Alur Data dan Perhitungan Real-time
+1. **Saat aplikasi dibuka**: Ambil data kelahiran dari penyimpanan lokal. Hitung ulang semua data metafisika berdasarkan waktu sekarang.
+2. **Gunakan use case** yang memanggil masing-masing kalkulator (Bazi, ZWDS, QMDJ, Feng Shui, I Ching) dan menggabungkannya menjadi `GameStats`.
+3. **Simpan sementara** di ViewModel. Tidak perlu persistensi karena data selalu baru setiap kali buka.
+4. **Background update** (opsional): Jika pengguna mengizinkan, aplikasi dapat menghitung ulang setiap jam dan mengirim notifikasi jika ada perubahan signifikan (misal: musuh baru muncul).
+5. **Slider timeline**: Saat digeser, hitung ulang data untuk waktu yang dipilih menggunakan fungsi prediksi (misal: QMDJ untuk jam tertentu).
+
+---
+
+### 6. Catatan Implementasi (Non-Koding)
+- **Modularitas**: Pisahkan modul perhitungan (Bazi, ZWDS, dll.) dari modul UI. Gunakan arsitektur bersih (domain, data, presentation).
+- **Akurasi**: Pastikan setiap rumus dapat dijelaskan dan diverifikasi. Sediakan halaman “Metode Perhitungan” untuk transparansi.
+- **Kinerja**: Perhitungan metafisika bisa kompleks; lakukan di background thread (Coroutine Dispatcher.Default).
+- **Penyimpanan**: Data kelahiran simpan di DataStore (preferensi) atau Room jika ada riwayat. Achievement simpan di Room.
+- **UI**: Gunakan Jetpack Compose untuk fleksibilitas desain. Komponen kustom seperti kompas dan roda I Ching bisa dibuat dengan Canvas.
+- **Testing**: Uji setiap kalkulator dengan data sampel dan bandingkan dengan hasil manual dari pakar.
+
+---
+
+### 7. Kesimpulan
+Konsep ini menyediakan kerangka lengkap untuk aplikasi yang menggabungkan metafisika China dengan pengalaman game RPG. Semua elemen visual berasal dari data matematis, interaktif, dan dirancang agar pengguna merasa sebagai karakter utama. Dengan pedoman ini, tim pengembang dapat langsung mengimplementasikan kode sesuai dengan platform Android (Kotlin). Selamat berkarya!
+
+**– DeepSeek**
+
+*Dokumen ini dapat disalin dan digunakan sebagai referensi utama.*
