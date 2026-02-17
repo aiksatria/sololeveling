@@ -1,0 +1,233 @@
+TECHNICAL REFERENCE DOCUMENT (TRD)
+
+PROJECT: BAZI LIFE ENGINE (CODE: CELESTIAL-RPG)
+
+Version: 1.0 (Gemini/Eva Locked Definition)
+Target Platform: Android (Native Kotlin / Jetpack Compose)
+Architecture: Clean Architecture + MVVM + Metaphysics Computation Layer
+
+1. SYSTEM OVERVIEW
+
+Sistem ini adalah Deterministic Life Simulator yang mengonversi data metafisika statis (Waktu Lahir) dan dinamis (Waktu Real-time) menjadi parameter RPG terukur (0.0 - 100.0) tanpa menggunakan Random Number Generator (RNG) semu. Seluruh output visual (HP, MP, Enemy) adalah representasi grafis dari kalkulasi matematika kompleks.
+
+2. CORE ARCHITECTURE DIAGRAM
+
+Aplikasi dibangun di atas 4 layer utama untuk memastikan modularitas dan performa tinggi.
+
+2.1. Layer 1: Data Source (Input)
+
+Static Input: UserBirthData (Year, Month, Day, Hour, Lat/Long).
+
+Dynamic Input: SystemClock (Real-time UNIX Timestamp) & GeoLocation.
+
+Reference Database: SQLite/Room (Lookup Tables untuk 60 Jia Zi, Bintang ZWDS, Struktur QMDJ).
+
+2.2. Layer 2: The Metaphysics Computation Engine (Back-end Logic)
+
+Ini adalah "Otak" sistem. Terdiri dari modul kalkulasi murni (Pure Functions).
+
+BaziCalculator: Menghitung kekuatan 5 Elemen & 10 Dewa (Ten Gods).
+
+ZwdsCalculator: Mapping 12 Istana & Posisi Bintang (Stars).
+
+QmdjCalculator: Menghitung Chart Jam (Ju) untuk Time-Space luck.
+
+Normalization Service: Mengubah output mentah (Raw Enum/Int) menjadi float 0.0f - 1.0f.
+
+2.3. Layer 3: Game Logic Adapter (Mapping)
+
+Mengubah data normalisasi menjadi entitas Game.
+
+StatMapper: (FireStrength: 0.8) -> MP: 800/1000.
+
+EntitySpawner: (ClashEvent: True) -> Spawn: EnemyObject.
+
+QuestGenerator: (MissingElement: Water) -> Quest: "Drink Water".
+
+2.4. Layer 4: Presentation (UI)
+
+Jetpack Compose: Rendering UI reaktif.
+
+State Management: Kotlin StateFlow (Unidirectional Data Flow).
+
+3. ALGORITMA NORMALISASI & LOGIKA RPG (THE SECRET SAUCE)
+
+Bagian ini mendefinisikan bagaimana angka metafisika diterjemahkan menjadi status game.
+
+3.1. Normalisasi Kekuatan Elemen (Base Stat)
+
+Setiap elemen (Kayu, Api, Tanah, Logam, Air) dihitung bobotnya berdasarkan:
+
+Score Dasar: Kehadiran di 4 Pilar (Batang Langit = 1.0, Cabang Bumi = 2.0, Akar Tersembunyi = 0.5).
+
+Musim (Bulan Lahir): Multiplier musim (Lahir musim Dingin -> Air x 2.0).
+
+Rumus:
+
+val rawScore = (heavenStemCount * 1.0) + (earthBranchCount * 2.0) + (hiddenStemCount * 0.5)
+val seasonMultiplier = getSeasonMultiplier(monthBranch, element)
+val finalScore = rawScore * seasonMultiplier // Normalized 0-100
+
+
+3.2. Player Status Mapping Formula
+
+Mendefinisikan atribut karakter berdasarkan DayMaster (DM) dan kekuatan elemen pendukung.
+
+RPG Attribute
+
+Sumber Data (Source)
+
+Algoritma Kalkulasi (Pseudocode)
+
+HP (Vitality)
+
+Resource Element (Yin) + Self Element (Bi Jian/Jie Cai)
+
+HP = (ResourceScore * 0.6) + (SelfScore * 0.4) + (ZWDS_HealthPalace * 0.2)
+
+MP (Spirit)
+
+Output Element (Shi Shen/Shang Guan) + QMDJ Spirit
+
+MP = (OutputScore * 0.7) + (QMDJ_DoorAuspc * 0.3)
+
+STR (Attack)
+
+Officer (Guan/Sha) + Seven Killings Star
+
+STR = (OfficerScore * 10) + (ZWDS_PowerStars_Count * 5)
+
+DEF (Defense)
+
+Wealth Element (Cai) + Resource
+
+DEF = (WealthScore * 0.5) + (ResourceScore * 0.5)
+
+LUCK (Crit)
+
+Temporal Flow (QMDJ + Da Yun)
+
+LUCK = (QMDJ_StructureScore + DaYun_FavorableScore) / 2
+
+3.3. Enemy Generation Logic (Conflict Engine)
+
+Musuh muncul bukan secara acak, tapi saat terjadi Clash (Ciong) atau Harm (Chuan) antara Waktu Real-time dengan Chart User.
+
+Logic:
+
+fun checkEnemySpawn(userBazi: BaziChart, currentHour: Pillar): Enemy? {
+    val clash = isClash(userBazi.dayPillar, currentHour)
+    val void = isVoid(currentHour) // Kong Wang
+    val qiMenBad structure = getQmdjStructure(currentHour).isOminous
+
+    return when {
+        clash && qiMenBad -> EnemyType.BOSS_RAID // "Chaos Emperor"
+        clash -> EnemyType.ELITE_MOB // "Time Wraith"
+        void -> EnemyType.DEBUFF_TRAP // "Void Zone"
+        else -> null // Safe Zone
+    }
+}
+
+
+4. DATA STRUCTURES (KOTLIN IMPLEMENTATION)
+
+4.1. The User Entity
+
+data class PlayerEntity(
+    val dayMaster: Element,
+    val stats: GameStats,
+    val affinity: Map<Element, Float>, // Radar Chart Data
+    val currentWeapon: WeaponObject,
+    val activeBuffs: List<Buff>
+)
+
+data class GameStats(
+    val hp: Int,      // Max 1000
+    val mp: Int,      // Max 1000
+    val str: Int,     // 0-100
+    val agi: Int,     // 0-100
+    val lck: Int      // 0-100 (Critical Rate)
+)
+
+
+4.2. The Weapon Object
+
+Senjata digenerate dinamis berdasarkan Favorable God (Yong Shen) atau elemen penyeimbang.
+
+data class WeaponObject(
+    val type: WeaponType, // SWORD (Metal), STAFF (Wood), ORB (Fire), SHIELD (Earth), SPEAR (Water)
+    val element: Element,
+    val power: Int,       // Based on "Officer" star strength
+    val name: String      // Generated: "Crimson Phoenix Blade" (Fire)
+)
+
+
+5. TECHNICAL STACK & LIBRARIES
+
+Rekomendasi teknologi untuk memastikan performa tinggi dan UI yang smooth.
+
+Language: Kotlin 1.9+
+
+UI Framework: Jetpack Compose (Material 3).
+
+Why: Memudahkan pembuatan Custom Canvas untuk "Radar Chart" dan "Timeline Slider" yang kompleks.
+
+Async Processing: Kotlin Coroutines & Flow.
+
+Why: Kalkulasi Bazi/QMDJ berat. Wajib dijalankan di Dispatchers.Default agar UI tidak freeze.
+
+Local DB: Room Database (SQLite).
+
+Store: User Profiles, Historical Achievement Logs, Daily Quest Cache.
+
+Date/Time: java.time.* (ZonedDateTime). Presisi waktu sangat vital.
+
+Math: java.math.BigDecimal (Untuk presisi koordinat Solar Time).
+
+6. KEY FEATURES SPECIFICATION (UI/UX)
+
+6.1. The "Solo Leveling" Dashboard
+
+Main HUD:
+
+Health/Mana Bar dengan animasi filling liquid.
+
+Element Radar: Polygon 5 sisi yang berubah bentuk real-time sesuai jam.
+
+Time Slider (The Prophet Engine):
+
+Komponen: Horizontal Slider (00:00 - 23:59).
+
+Behavior: Saat di-drag, lakukan Debounce (200ms), lalu trigger kalkulasi prediksi masa depan. UI berubah warna sesuai elemen jam tersebut.
+
+6.2. Interactive "Audit" Modal
+
+Setiap elemen UI harus clickable.
+
+User Action: Klik pada STR: 85.
+
+System Response: Buka Modal/Popup.
+
+Title: Strength Calculation.
+
+Content: "Base Strength (Day Master) 40 + Seven Killings Star (45). Element: Metal yang kuat di Musim Gugur."
+
+7. SECURITY & INTEGRITY
+
+Offline First: Semua kalkulasi dilakukan di local device. Tidak ada ketergantungan server untuk core mechanic (Privasi Data).
+
+Anti-Cheat: Jam sistem divalidasi dengan NTP (Network Time Protocol) jika online, untuk mencegah user memanipulasi waktu sistem demi "menghindari musuh".
+
+8. DEVELOPMENT MILESTONES
+
+Phase 1 (The Core): Implementasi algoritma Bazi & Normalisasi (Text output only).
+
+Phase 2 (The Skin): Implementasi UI Jetpack Compose & Mapping Data ke Visual RPG.
+
+Phase 3 (The Logic): Implementasi Enemy Spawning & Quest Logic.
+
+Phase 4 (Polish): Animasi, Sound FX, dan "Audit Mode" untuk transparansi.
+
+End of Document
+Prepared by: Eva (System Architect)
+Authorized for: Mas Lukman
