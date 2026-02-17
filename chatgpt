@@ -1,0 +1,451 @@
+Baik. Berikut versi final yang sudah dirapikan, disusun sistematis, dan siap dijadikan dokumen acuan tim pengembang.
+
+---
+
+# 🎮 Konsep Final Aplikasi
+
+# **BAZI LIFE ENGINE – RPG Status System**
+
+Versi: Lusi (ChatGPT v5)
+Dokumen: Non-koding, siap implementasi Android (Kotlin / Compose)
+
+---
+
+# 1. Visi Produk
+
+Aplikasi ini adalah **Life System Simulator** berbasis metafisika Tiongkok klasik.
+
+Tujuan utama:
+
+* Mengubah sistem klasik (Bazi, Zi Wei Dou Shu, Qi Men Dun Jia, Feng Shui, I Ching) menjadi **engine numerik terukur**
+* Menghadirkan antarmuka RPG modern
+* Menjaga transparansi penuh: semua angka bisa diaudit dan dijelaskan
+
+Prinsip utama:
+
+> Tidak ada angka dekoratif.
+> Semua elemen visual berasal dari model matematis.
+
+---
+
+# 2. Arsitektur Konseptual Global
+
+```
+[Birth Data + Real-Time Clock]
+                ↓
+      METAPHYSICS ENGINES
+  - Bazi Engine
+  - Zi Wei Engine
+  - Qi Men Engine
+  - Feng Shui Engine
+  - I Ching Engine
+                ↓
+        NORMALIZATION LAYER
+     (convert to 0–100 scale)
+                ↓
+         GAME CORE ENGINE
+  - Player Stat Builder
+  - Enemy Generator
+  - Quest Generator
+  - Timeline Simulator
+                ↓
+            UI LAYER
+      (RPG Status Interface)
+```
+
+Struktur ini memastikan modularitas dan skalabilitas.
+
+---
+
+# 3. Layer Metaphysics Engine
+
+## 3.1 Bazi (四柱)
+
+Output mentah:
+
+* 4 Pilar (Tahun, Bulan, Hari, Jam)
+* Day Master
+* Kekuatan elemen
+* 10 Dewa
+* Da Yun (10-year cycle)
+
+Output numerik:
+
+* DayMasterStrength (0–100)
+* FiveElementWeight (persentase)
+* TenGodWeight (0–10 per dewa)
+
+---
+
+## 3.2 Zi Wei Dou Shu (紫微斗数)
+
+Output mentah:
+
+* 12 rumah
+* Bintang utama & tambahan
+* Bintang baik/buruk
+
+Output numerik:
+
+* GoodStarScore (0–100)
+* BadStarScore (0–100)
+* PalaceWeight per rumah
+
+---
+
+## 3.3 Qi Men Dun Jia (奇门遁甲)
+
+Output mentah:
+
+* 8 Pintu
+* 9 Bintang
+* 8 Dewa
+* Arah & jam aktif
+
+Output numerik:
+
+* HourLuckIndex (0–100)
+* DirectionLuckIndex (per arah)
+* RiskScore (jam buruk)
+
+---
+
+## 3.4 Feng Shui Harian
+
+Output numerik:
+
+* AuspiciousDirectionScore
+* ShaDirectionScore
+* WuHuangImpactScore
+
+---
+
+## 3.5 I Ching (易经)
+
+Output:
+
+* Heksagram aktif
+* Kategori: Stabil / Transisi / Konflik / Momentum
+
+Dikonversi menjadi:
+
+* IChingVolatilityIndex (0–100)
+
+---
+
+# 4. Normalization Layer
+
+Semua output engine dikonversi ke skala 0–100.
+
+Rumus umum:
+
+```
+NormalizedValue = 
+((RawValue - MinReference) / (MaxReference - MinReference)) × 100
+```
+
+Tujuan:
+
+* Standarisasi lintas sistem
+* Memudahkan agregasi
+* Memungkinkan simulasi
+
+---
+
+# 5. Game Core Engine
+
+Semua stat karakter berasal dari 5 indeks inti:
+
+| Core Metric | Sumber        |
+| ----------- | ------------- |
+| Vitality    | Bazi + ZWDS   |
+| Momentum    | Qi Men        |
+| Stability   | Feng Shui     |
+| Fortune     | ZWDS + Qi Men |
+| Volatility  | I Ching + Sha |
+
+---
+
+# 6. Player Stats System
+
+## HP – Vitality
+
+```
+HP = (SupportElementScore × 0.6) 
+   + (HealthStarScore × 0.4)
+```
+
+---
+
+## MP – Spiritual Drive
+
+```
+MP = (AirWeight + FireWeight) 
+   × QiMenPositiveDoorFactor
+```
+
+---
+
+## Stamina – Endurance
+
+```
+Stamina = (DayMasterStrength × 0.7) 
+        + (EarthWeight × 0.3)
+```
+
+---
+
+## STR – Power
+
+```
+STR = (DayMasterStrength × 10) 
+    + OffensiveStarBonus
+```
+
+---
+
+## AGI – Adaptability
+
+```
+AGI = WoodWeight 
+    + HorseStarBonus 
+    − ClashPenalty
+```
+
+---
+
+## LUCK – Fortune Index
+
+```
+LUCK = (GoodStarScore − BadStarScore 
+       + HourLuckIndex) normalized
+```
+
+---
+
+## Element Affinity
+
+![Image](https://cdn.dribbble.com/userupload/42767439/file/original-0891737f3dbf1c29d5da903c86028705.jpeg?resize=400x0)
+
+![Image](https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Wuxing_diagram.svg/1280px-Wuxing_diagram.svg.png)
+
+![Image](https://cdn.dribbble.com/userupload/7463283/file/original-583c86ddb8c5814af52551f809cb0578.jpg?resize=400x300)
+
+![Image](https://cdn.dribbble.com/userupload/42055902/file/original-b660751fb736479a30ee005e7f20f3c0.png?resize=400x0)
+
+Radar 5 elemen:
+
+* Kayu
+* Api
+* Tanah
+* Logam
+* Air
+
+Update real-time saat timeline digeser.
+
+---
+
+# 7. Weapon System
+
+Penentuan:
+
+1. Elemen terkuat kedua
+2. Bintang ofensif dominan
+
+Formula:
+
+```
+WeaponLevel = DaYunIndex + 1
+WeaponPower = SecondaryElementWeight × 1.5
+```
+
+Visual:
+
+* Api → glow merah
+* Air → aura biru
+* Logam → efek silver
+* Kayu → hijau neon
+* Tanah → emas
+
+---
+
+# 8. Beast System
+
+Beast berasal dari:
+
+* Shio tahun
+* Na Yin element
+* Tian Ma modifier
+
+Buff:
+
+```
+BeastBuff = DominantPalaceWeight × 5%
+```
+
+Level Beast mengikuti WeaponLevel.
+
+---
+
+# 9. Enemy Generator System
+
+Enemy muncul jika:
+
+```
+Volatility + ElementClashScore + ShaImpact 
+> Threshold
+```
+
+Jenis Enemy:
+
+| Tipe           | Sumber                      |
+| -------------- | --------------------------- |
+| Element Foe    | Elemen lawan DM             |
+| Direction Boss | Wu Huang / San Sha          |
+| Time Wraith    | Jam buruk                   |
+| Palace Crisis  | Rumah terkena bintang buruk |
+
+---
+
+## Visual Enemy Panel
+
+![Image](https://w0.peakpx.com/wallpaper/403/1003/HD-wallpaper-elemental-summoner-elementals-monsters-fantasy-dark-magic.jpg)
+
+![Image](https://www.dndbeyond.com/avatars/thumbnails/30783/695/1000/1000/638062015772259390.png)
+
+![Image](https://dl2.myminifactory.com/object-assets/6077096fed8bb/images/720X720-golem.jpg)
+
+![Image](https://dl2.myminifactory.com/object-assets/6077096fed8bb/images/1000X1000-gol.jpg)
+
+Klik musuh → tampil:
+
+* Sumber klasik
+* Nilai numerik
+* Rumus kalkulasi
+* Cara netralisasi
+
+---
+
+# 10. Quest Engine
+
+Quest dihasilkan otomatis sebagai counter-strategy.
+
+Contoh mekanisme:
+
+Jika Logam menyerang Kayu:
+
+→ Quest: Tambah elemen Air
+→ Reward: +LUCK sementara
+
+Formula reward:
+
+```
+RewardValue = EnemyPower × ComplianceFactor
+```
+
+---
+
+# 11. Timeline Simulation Engine
+
+Bukan slider dekoratif.
+
+Setiap jam dihitung:
+
+* Qi Men chart
+* Elemen clash
+* Direction risk
+* I Ching shift
+
+Output:
+
+* Luck curve 24 jam
+* Enemy spawn probability
+* Quest adjustment
+
+---
+
+## Visual Dashboard
+
+![Image](https://cdn.dribbble.com/userupload/35040213/file/original-471b2d1a375bc64100ee4d09976a07fa.png?resize=400x0)
+
+![Image](https://cdn.dribbble.com/userupload/7222823/file/original-56d7044f7330d93830ec9e9b200fa693.png?resize=400x0)
+
+![Image](https://img.itch.zone/aW1nLzk4MzQ2NjQucG5n/original/VMCfmk.png)
+
+![Image](https://img.craftpix.net/2024/12/Free-Cyberpunk-Drone-Game-512x512-Icons2.jpg)
+
+Menampilkan:
+
+* Daily Luck %
+* Best Direction
+* Worst Direction
+* Peak Hour
+* Risk Hour
+* Enemy Alert
+
+---
+
+# 12. Achievement System
+
+Trigger berbasis event:
+
+* Masuk Da Yun baru
+* Hari Volatility ekstrem
+* Hari tanpa enemy
+* Ulang tahun milestone
+
+Disimpan permanen (Room database).
+
+---
+
+# 13. UI / UX Principles
+
+1. Tema gelap + neon
+2. Angka monospace
+3. Semua angka clickable
+4. Modal selalu tampilkan sumber & rumus
+5. Animasi ringan, bukan berat
+
+---
+
+# 14. Data Flow Real-Time
+
+Saat app dibuka:
+
+1. Ambil data kelahiran lokal
+2. Hitung semua engine
+3. Normalize
+4. Generate GameStats
+5. Generate Enemy & Quest
+6. Render UI
+
+Timeline digeser → simulasi ulang tanpa menyimpan permanen.
+
+---
+
+# 15. Nilai Strategis Konsep Ini
+
+Keunggulan:
+
+* Modular
+* Audit-friendly
+* Matematis
+* Skalabel
+* Real-time
+* Siap dikembangkan ke sistem lain (Astrologi Barat, Tarot, dll.)
+
+---
+
+# Kesimpulan
+
+Konsep ini menggabungkan:
+
+* Ketepatan sistem klasik
+* Engine numerik terstruktur
+* RPG visual modern
+* Simulasi waktu dinamis
+* Transparansi perhitungan
+
+Aplikasi ini bukan sekadar hiburan, tetapi sistem analitik kehidupan dalam bentuk game.
+
+Dokumen ini dapat langsung digunakan sebagai referensi implementasi teknis Android.
