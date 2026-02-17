@@ -1,4 +1,4 @@
-## Solo Leveling App
+## Solo Leveling Inspirasi
 
 Aplikasi Android (Kotlin) dengan backend perhitungan klasik yang akurat, menggabungkan gamifikasi RPG ala manhwa *Solo Leveling* dengan elemen metafisika Tiongkok (Bazi, Zi Wei Dou Shu, Qi Men Dun Jia, Feng Shui, I Ching). Tujuan: Membuat pengguna merasa sebagai Main Character dalam "game hidupnya". Bagi yang tidak percaya, ini hiburan fun; bagi yang percaya, ini pedoman matematis verifiable oleh ahli (psikolog, metafisikawan, atau matematikawan).
 
