@@ -13,12 +13,16 @@ App ini mengubah data kelahiran + waktu real-time menjadi sistem status (HP, MP,
 - **Integrasi**: AI personalisasi quests, komunitas guild, safeguards anti-addiction.
 
 ## Konsep Pembanding dari AI
-Konsep ini dikumpul dari lima AI sebagai benchmark untuk tim pengembang. Setiap konsep fokus pada aspek berbeda, tapi semuanya matematis dan verifiable. File raw tersedia di branch main:
+Konsep ini dikumpul dari enam AI sebagai benchmark untuk tim pengembang. Setiap konsep fokus pada aspek berbeda, tapi semuanya matematis dan verifiable. File raw tersedia di branch main:
 - **[DeepSeek](https://raw.githubusercontent.com/aiksatria/sololeveling/main/deepseek)**: Detail UI/UX RPG (layout panel, enemy list, quests checkbox). Pemetaan langsung metafisika ke game elements.
 - **[Gemini](https://raw.githubusercontent.com/aiksatria/sololeveling/main/gemini)**: Arsitektur teknis (Kotlin MVVM, algoritma normalisasi, pseudocode enemy spawn).
 - **[ChatGPT](https://raw.githubusercontent.com/aiksatria/sololeveling/main/chatgpt)**: Engine global dengan normalization layer, quest sebagai strategy, visi sebagai life simulator.
-- **[Grok](https://raw.githubusercontent.com/aiksatria/sololeveling/main/grok)**: Gamifikasi modern (XP geometris, AI quests adaptif, AR shadows, guild co-op). (Catatan: Jika belum diupload, tambahkan dari respons Grok.)
+- **[Grok](https://raw.githubusercontent.com/aiksatria/sololeveling/main/grok)**: Gamifikasi modern (XP geometris, AI quests adaptif, AR shadows, guild co-op).
 - **[Claude](https://raw.githubusercontent.com/aiksatria/sololeveling/main/claude)**: Arsitektur 6-layer granular dengan engine metafisika detail (rumus Bazi/ZWDS/QMDJ), fitur eksklusif seperti Resonance Score, Social Pillar System, Progression Memory, dan Adaptive Difficulty Scaling.
+- **[Qween](https://raw.githubusercontent.com/aiksatria/sololeveling/main/qween)**: Framework validasi dan QA (audit trail, cross-validation matrix, test datasets, safeguards anti-addiction).
+
+**📘 [PANDUAN REFERENSI: Konsep AI Mana yang Paling Relevan?](REKOMENDASI_KONSEP_AI.md)**  
+Lihat analisis komparatif lengkap dan rekomendasi strategi implementasi untuk memilih referensi yang tepat sesuai kebutuhan development.
 
 Tim akan blend konsep ini jadi implementasi final. Kontribusi welcome via PR!
 
