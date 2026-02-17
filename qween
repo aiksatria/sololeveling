@@ -1,0 +1,315 @@
+## Konsep Final Aplikasi Bazi Game – System Architecture & Validation Framework
+**Oleh: Assistant (Google)**  
+*Untuk tim pengembang – konsep non-koding, siap dijadikan acuan implementasi.*
+
+---
+
+### 1. Pendahuluan
+Dokumen ini melengkapi 5 konsep AI sebelumnya dengan fokus pada **validasi matematis, arsitektur informasi, dan framework testing**. Tujuannya memastikan setiap elemen game yang ditampilkan dapat diaudit, diverifikasi, dan dipertanggungjawabkan secara akademis. Konsep ini menekankan transparansi perhitungan agar aplikasi dapat diterima oleh komunitas metafisika tradisional maupun pengembang game modern.
+
+---
+
+### 2. Framework Validasi Matematis
+
+#### 2.1. Prinsip Normalisasi (0-100 Scale)
+Semua stat game harus melalui layer normalisasi dengan kriteria berikut:
+
+| Kriteria | Deskripsi | Contoh Implementasi |
+|----------|-----------|---------------------|
+| **Deterministik** | Output sama untuk input sama | Bazi tanggal 1 Jan 1990, jam 10:00 = selalu sama |
+| **Reproducible** | Dapat dihitung manual oleh ahli | Sediakan "Show Calculation" button |
+| **Bounded** | Nilai min-max jelas | HP tidak boleh <0 atau >100 |
+| **Linear/Non-linear** | Tentukan jenis scaling | EXP menggunakan curve geometris |
+| **Documented** | Setiap rumus punya referensi | Link ke buku/classic text |
+
+#### 2.2. Audit Trail System
+Setiap perhitungan harus menyimpan metadata:
+```
+- Timestamp perhitungan
+- Version engine metafisika
+- Input parameters (tanggal, jam, lokasi)
+- Output values (sebelum & sesudah normalisasi)
+- Reference source (buku/halaman/rumus)
+```
+
+#### 2.3. Cross-Validation Matrix
+| Engine | Validasi Terhadap | Toleransi Error |
+|--------|-------------------|-----------------|
+| Bazi | Kalkulator Bazi established | 0% (harus exact) |
+| Zi Wei Dou Shu | Minimal 2 software referensi | <5% |
+| Qi Men Dun Jia | Chart manual ahli | <10% |
+| Feng Shui | Compass fisik + software | <5° |
+| I Ching | Buku I Ching standar | 0% (heksagram fixed) |
+
+---
+
+### 3. Arsitektur Informasi & Data Flow
+
+#### 3.1. Layer Diagram
+```
++----------------------------------------------------------------------------------+
+|                              PRESENTATION LAYER (UI)                             |
+|  Jetpack Compose Screens | Custom Views (Compass, Wheel) | Animations & Effects |
++----------------------------------------------------------------------------------+
+|                                   ↓                                              |
++----------------------------------------------------------------------------------+
+|                               VIEWMODEL LAYER                                    |
+|  State Management | User Interactions | Navigation Logic | Error Handling       |
++----------------------------------------------------------------------------------+
+|                                   ↓                                              |
++----------------------------------------------------------------------------------+
+|                                DOMAIN LAYER                                      |
+|  Use Cases | Business Rules | Validation Logic | Game Stat Mapping              |
++----------------------------------------------------------------------------------+
+|                                   ↓                                              |
++----------------------------------------------------------------------------------+
+|                                 DATA LAYER                                       |
+|  Bazi Engine | ZWDS Engine | QMDJ Engine | Feng Shui Engine | I Ching Engine   |
++----------------------------------------------------------------------------------+
+|                                   ↓                                              |
++----------------------------------------------------------------------------------+
+|                              STORAGE LAYER                                       |
+|  DataStore (UserPrefs) | Room (Achievements) | Cache (Calculations)             |
++----------------------------------------------------------------------------------+
+```
+
+#### 3.2. Data Flow Real-time
+```
+[User Input: Birth Data] → [Validation] → [Calculation Engine] → [Normalization]
+                                                                          ↓
+[UI Update] ← [ViewModel State] ← [Game Stat Mapping] ← [Domain Layer]
+```
+
+#### 3.3. Dependency Injection Structure
+| Module | Dependencies | Scope |
+|--------|--------------|-------|
+| BaziCalculator | CalendarUtils, TimeZone | Singleton |
+| QuestGenerator | QMDEngine, FengShuiEngine | Per Day |
+| StatMapper | NormalizationRules, GameConfig | Singleton |
+| UserRepository | DataStore, Room | Singleton |
+
+---
+
+### 4. Sistem Status & Mapping Detail
+
+#### 4.1. Primary Stats (Core)
+| Stat | Formula Structure | Update Frequency | Source Priority |
+|------|-------------------|------------------|-----------------|
+| HP | Bazi Day Master Strength + ZWDS Health Stars | Daily | Bazi 70% + ZWDS 30% |
+| MP | Water Element + Spiritual Stars | Hourly | QMDJ 60% + Bazi 40% |
+| STR | Metal Element + Offensive Stars | Daily | Bazi 80% + ZWDS 20% |
+| AGI | Wood Element + Travel Stars | Daily | Bazi 70% + Shio 30% |
+| LUCK | ZWDS Good/Bad Star Ratio | Hourly | ZWDS 90% + QMDJ 10% |
+
+#### 4.2. Secondary Stats (Derived)
+| Stat | Derived From | Purpose |
+|------|--------------|---------|
+| Critical Hit | LUCK + AGI | Quest success rate |
+| Defense | HP + STR | Enemy clash resistance |
+| Regen Rate | MP + HP | Recovery between quests |
+| Affinity | 5 Element Ratio | Weapon/Beast compatibility |
+
+#### 4.3. Stat Cap & Scaling Rules
+```
+Level 1-10:  Max stat = 50
+Level 11-20: Max stat = 70
+Level 21-30: Max stat = 85
+Level 31+:   Max stat = 100
+
+Scaling Type: Linear untuk HP/MP, Geometric untuk EXP
+```
+
+---
+
+### 5. Quest & Enemy Generation System
+
+#### 5.1. Quest Generation Logic
+```
+Input: Current Date/Time + User Birth Data
+       ↓
+[QMDJ Chart] → [Feng Shui Daily] → [Bazi Day Pillar]
+       ↓              ↓                    ↓
+[Direction Quest] [Color Quest] [Element Quest]
+       ↓              ↓                    ↓
+          [Quest Pool Selection]
+                    ↓
+          [Difficulty Adjustment]
+                    ↓
+          [Final Quest List (3-5)]
+```
+
+#### 5.2. Enemy Spawn Conditions
+| Enemy Type | Spawn Trigger | Duration | Difficulty |
+|------------|---------------|----------|------------|
+| Element Clash | Daily Bazi Clash | 24 hours | Based on clash severity |
+| Direction Sha | Feng Shui Bad Direction | Until direction changed | 1-5 stars |
+| Time Dungeon | QMDJ Bad Hour | 2 hours | Fixed per hour |
+| Boss Enemy | Year Pillar Conflict | 1 month | Based on age |
+
+#### 5.3. Quest Reward Structure
+| Quest Type | Base Reward | Bonus Condition | Max Reward |
+|------------|-------------|-----------------|------------|
+| Direction Avoid | +5% Daily Luck | Complete before noon | +10% |
+| Color Wear | +5% Stat Buff | Wear all day | +15% |
+| Time Activity | +10% EXP | Exact hour match | +20% |
+| Meditation | +5% MP | Morning hour | +10% |
+
+---
+
+### 6. Testing & Quality Assurance Framework
+
+#### 6.1. Test Categories
+| Category | Scope | Tools | Frequency |
+|----------|-------|-------|-----------|
+| Unit Test | Individual calculators | JUnit | Every commit |
+| Integration Test | Engine combinations | JUnit + Mock | Weekly |
+| Validation Test | vs Expert calculations | Manual check | Monthly |
+| UI Test | Screen flows | Espresso | Every release |
+| Performance Test | Calculation speed | Profiler | Monthly |
+
+#### 6.2. Test Data Sets
+```
+Dataset A: 10 Known Birth Dates (verified by experts)
+Dataset B: Edge Cases (leap year, DST, timezone changes)
+Dataset C: Stress Test (1000 calculations batch)
+Dataset D: User Reported Discrepancies (from beta)
+```
+
+#### 6.3. Acceptance Criteria
+| Metric | Target | Critical Threshold |
+|--------|--------|-------------------|
+| Calculation Accuracy | 100% (Bazi) | <95% = block release |
+| App Load Time | <2 seconds | >5 seconds = block |
+| Memory Usage | <100 MB | >200 MB = optimize |
+| Battery Impact | <5% per hour | >10% = optimize |
+| Crash Rate | <0.1% | >1% = block release |
+
+---
+
+### 7. Dokumentasi & Transparansi
+
+#### 7.1. In-App Documentation Structure
+```
+Settings → About → Calculation Methods
+                    ├── Bazi (4 Pillars)
+                    │   ├── Source: "Complete Book of Bazi"
+                    │   ├── Version: 2.1
+                    │   └── Last Updated: 2026-01
+                    ├── Zi Wei Dou Shu
+                    │   ├── Source: "ZWDS Classic Text"
+                    │   └── ...
+                    └── Qi Men Dun Jia
+                        └── ...
+```
+
+#### 7.2. Modal Popup Content (Per Stat)
+```
++------------------------------------------+
+| STAT: HP (Vitalitas)                     |
++------------------------------------------+
+| Current Value: 85/100                    |
+|                                          |
+| Formula:                                 |
+| HP = (DM Strength × 0.6) +               |
+|      (Health Stars × 0.3) +              |
+|      (Element Support × 0.1)             |
+|                                          |
+| Breakdown:                               |
+| - DM Strength: 70 (Bazi Pillar)          |
+| - Health Stars: 8/10 (ZWDS Tian Yi)      |
+| - Element Support: Water + Wood = 60     |
+|                                          |
+| Reference:                               |
+| [📖] Complete Book of Bazi, Ch. 5        |
+| [🔗] Link to source text                 |
+|                                          |
+| [Close] [Report Issue] [Share]           |
++------------------------------------------+
+```
+
+#### 7.3. Version Control for Calculation Engine
+| Version | Changes | Date | Approved By |
+|---------|---------|------|-------------|
+| 1.0 | Initial Bazi Engine | 2026-01 | Team Lead |
+| 1.1 | ZWDS Integration | 2026-02 | Metafisika Expert |
+| 1.2 | QMDJ Hourly Update | 2026-03 | Team Lead |
+| 2.0 | Normalization V2 | 2026-06 | Full Review |
+
+---
+
+### 8. Risk Management & Safeguards
+
+#### 8.1. Anti-Addiction Measures
+| Feature | Implementation | Trigger |
+|---------|----------------|---------|
+| Session Limit | Max 2 hours continuous | Timer based |
+| Break Reminder | Notification every 30 min | Active usage |
+| Reality Check | "This is entertainment" disclaimer | First launch + weekly |
+| Spending Limit | Max purchase per month | Freemium features |
+
+#### 8.2. Content Warnings
+```
+⚠️  This app uses traditional metaphysics for entertainment.
+⚠️  Do not make critical life decisions based solely on app data.
+⚠️  Consult professionals for health, financial, legal matters.
+⚠️  Calculations may vary between different schools of thought.
+```
+
+#### 8.3. Data Privacy
+| Data Type | Storage | Encryption | Retention |
+|-----------|---------|------------|-----------|
+| Birth Data | Local Only | AES-256 | Until user delete |
+| Calculation History | Local Cache | None | 30 days |
+| Achievement Data | Local Room | None | Permanent |
+| Analytics (opt-in) | Server | TLS | 1 year |
+
+---
+
+### 9. Integration dengan Konsep AI Lain
+
+#### 9.1. Mapping ke 5 AI Sebelumnya
+| AI Concept | Integration Point | My Contribution |
+|------------|-------------------|-----------------|
+| DeepSeek (UI/UX) | Stat display | Validation modal content |
+| Gemini (Architecture) | MVVM structure | Testing framework |
+| ChatGPT (Engine) | Normalization layer | Audit trail system |
+| Grok (Gamification) | XP & leveling | Balance formulas |
+| Claude (6-Layer) | Metafisika engine | Cross-validation matrix |
+
+#### 9.2. Gap Analysis & Complement
+| Gap Identified | Solution | Priority |
+|----------------|----------|----------|
+| No validation framework | Add audit trail + test datasets | High |
+| Unclear normalization | Document formula per stat | High |
+| Missing expert review | Add expert approval workflow | Medium |
+| No version control | Engine versioning system | Medium |
+| Privacy concerns | Local-only storage option | High |
+
+---
+
+### 10. Roadmap Alignment (Q1-Q3 2026)
+
+| Quarter | My Focus Area | Deliverables |
+|---------|---------------|--------------|
+| **Q1 (MVP)** | Validation Framework | Test datasets, audit trail, documentation structure |
+| **Q2 (V1)** | Performance Optimization | Calculation speed, memory usage, battery impact |
+| **Q3 (V2)** | Community Features | Expert review system, discrepancy reporting, version control |
+
+---
+
+### 11. Kesimpulan
+
+Konsep ini menyediakan **framework validasi dan arsitektur informasi** yang melengkapi 5 konsep AI sebelumnya. Fokus pada transparansi, akurasi, dan kemampuan audit memastikan aplikasi dapat dipercaya oleh pengguna serius maupun dianggap hiburan fun oleh pengguna casual.
+
+**Rekomendasi Prioritas untuk Tim:**
+1. Implementasi audit trail sebelum MVP launch
+2. Validasi silang dengan minimal 2 ahli metafisika
+3. Dokumentasi in-app untuk setiap rumus
+4. Testing framework otomatis untuk regression prevention
+5. Safeguards anti-addiction sebagai ethical requirement
+
+Dokumen ini dapat digabungkan dengan 5 konsep AI lainnya untuk membentuk spesifikasi final yang komprehensif.
+
+**– Assistant (Google)**
+
+*Dokumen ini dapat disalin dan digunakan sebagai referensi utama.*
